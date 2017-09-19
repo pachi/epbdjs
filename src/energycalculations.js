@@ -369,6 +369,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
     && fp.step === 'A'
     && fp.source === 'RED'
   );
+  if (!fpA_grid) {
+    throw new UserException(`No grid weighting factor found (step A)`);
+  }
   const E_we_del_cr_grid_an = {
     ren: E_del_cr_an * fpA_grid.ren,
     nren: E_del_cr_an * fpA_grid.nren
@@ -379,6 +382,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
   const E_we_del_cr_pr_an = delivery_sources.reduce(
     (obj, gen) => {
       const fpA_pr_i = fp_cr.find(fp => fp.dest === 'input' && fp.step === 'A' && fp.source === gen);
+      if (!fpA_pr_i) {
+        throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+      }
       const E_pr_i = E_pr_cr_pr_i_an[gen];
       if (E_pr_i === 0) { return obj; }
       return {
@@ -436,6 +442,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
         .reduce((acc, gen) => {
           const F_g = F_pr_i[gen];
           const fpA_g = fpA_nEPus_i.find(fp => fp.source === gen);
+          if (!fpA_g) {
+            throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+          }
           return { ren: acc.ren + F_g * fpA_g.ren, nren: acc.nren + F_g * fpA_g.nren };
         },
         { ren: 0.0, nren: 0.0 }
@@ -452,6 +461,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
         .reduce((acc, gen) => {
           const F_g = F_pr_i[gen];
           const fpA_g = fpA_grid_i.find(fp => fp.source === gen);
+          if (!fpA_g) {
+            throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+          }
           return { ren: acc.ren + F_g * fpA_g.ren, nren: acc.nren + F_g * fpA_g.nren };
         },
         { ren: 0.0, nren: 0.0 }
@@ -478,6 +490,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
         .reduce((acc, gen) => {
           const F_g = F_pr_i[gen];
           const fpB_g = fpB_nEPus_i.find(fp => fp.source === gen);
+          if (!fpB_g) {
+            throw new UserException(`No weighting factor (step B) found for source ${ gen }`);
+          }
           return { ren: acc.ren + F_g * fpB_g.ren, nren: acc.nren + F_g * fpB_g.nren };
         },
         { ren: 0.0, nren: 0.0 }
@@ -494,6 +509,9 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
         .reduce((acc, gen) => {
           const F_g = F_pr_i[gen];
           const fpB_g = fpB_grid_i.find(fp => fp.source === gen);
+          if (!fpB_g) {
+            throw new UserException(`No weighting factor (step B) found for source ${ gen }`);
+          }
           return { ren: acc.ren + F_g * fpB_g.ren, nren: acc.nren + F_g * fpB_g.nren };
         },
         { ren: 0.0, nren: 0.0 }
