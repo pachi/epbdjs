@@ -1,3 +1,4 @@
+// @flow
 /* -*- coding: utf-8 -*-
 
 Copyright (c) 2016-2017 Ministerio de Fomento
@@ -28,37 +29,37 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 // -----------------------------------------------------------------------------------
 // Vector utilities
 // -----------------------------------------------------------------------------------
-export const zip = (...rows) => [...rows[0]].map((_, c) => rows.map(row => row[c]));
+export const zip = (...rows: any[]) => [...rows[0]].map((_, c) => rows.map(row => row[c]));
 
 // Elementwise sum res[i] = vec1[i] + vec2[i] + ... + vecj[i]
-export function veclistsum(veclist) {
+export function veclistsum(veclist: (number[])[]): number[] {
   return zip(...veclist).map(valsi => valsi.reduce((a, b) => a + b, 0));
 }
 
 // Elementwise minimum min res[i] = min(vec1[i], vec2[i])
-export function vecvecmin(vec1, vec2) {
+export function vecvecmin(vec1: number[], vec2: number[]): number[] {
   return vec1.map((el, ii) => Math.min(el, vec2[ii]));
 }
 
 // Elementwise sum of arrays
-export function vecvecsum(vec1, vec2) {
+export function vecvecsum(vec1: number[], vec2: number[]): number[] {
   return vec1.map((el, ii) => el + vec2[ii]);
 }
 
 // Elementwise difference res[i] = vec1[i] - vec2[i]
-export function vecvecdif(vec1, vec2) {
+export function vecvecdif(vec1: number[], vec2: number[]): number[] {
   return vec1.map((el, ii) => el - vec2[ii]);
 }
 
 // Elementwise multiplication res[i] = vec1[i] * vec2[i]
-export function vecvecmul(vec1, vec2) {
+export function vecvecmul(vec1: number[], vec2: number[]): number[] {
   return vec1.map((el, ii) => el * vec2[ii]);
 }
 
 // Multiply vector by scalar
-export function veckmul(vec1, k) {
+export function veckmul(vec1: number[], k: number): number[] {
   return vec1.map(v => v * k);
 }
 
 // Sum all elements in a vector
-export const vecsum = vec => vec.reduce((a, b) => a + b, 0);
+export const vecsum = (vec: number[]) => vec.reduce((a, b) => a + b, 0);
