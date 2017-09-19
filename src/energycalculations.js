@@ -1,3 +1,4 @@
+// @flow
 /* -*- coding: utf-8 -*-
 
 Copyright (c) 2016 Ministerio de Fomento
@@ -57,6 +58,14 @@ const TAG_REGEX = /[A-Za-z]+[0-9]*/;
 const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 
 // -----------------------------------------------------------------------------------
+// Flow types
+// -----------------------------------------------------------------------------------
+
+type Carrier = { type: 'CARRIER', carrier: string, ctype: string, csubtype: string, service: string, values: number[], comment: string };
+type Meta = { type: 'META', key: string, value: string|number };
+type Fp = { type: 'FACTOR', carrier: string, source: string, dest: string, step: string, ren: number, nren: number, comment: string };
+
+// -----------------------------------------------------------------------------------
 // Input/Output functions
 // -----------------------------------------------------------------------------------
 
@@ -96,7 +105,7 @@ const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 // * objects with type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrier_list(datastring) {
+export function parse_carrier_list(datastring: string): Array<Carrier|Meta> {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
@@ -108,7 +117,7 @@ export function parse_carrier_list(datastring) {
       const [fieldsstring, comment = ''] = line.split('#', 2).map(pp => pp.trim());
       const fieldslist = fieldsstring.split(',').map(ff => ff.trim());
       let [ carrier, ctype, csubtype, ...values ] = fieldslist;
-      if (fieldslist.lenght < 4) {
+      if (fieldslist.length < 4) {
         throw new UserException(`Invalid number of items in: ${ fieldsstring }`);
       }
       // Find a service tag or use the generic tag instead
@@ -154,7 +163,8 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
     .map(line => {
       const [key, svalue] = line.split(':', 2).map(l => l.trim());
       const value = svalue.match(FLOAT_REGEX) ? parseFloat(svalue) : svalue;
-      return { type: 'META', key, value };
+      const metaobj: Meta = { type: 'META', key, value };
+      return metaobj;
     });
 
   return [ ...components, ...meta ];
@@ -167,13 +177,13 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
  * @param {any} carrierlist
  * @returns {string}
  */
-export function serialize_carrier_list(carrierlist) {
+export function serialize_carrier_list(carrierlist: Array<any>): string {
   const metas = carrierlist
     .filter(e => e.type === 'META')
-    .map(m => `#META ${ m.key }: ${ m.value }`);
+    .map((m: Meta) => `#META ${ m.key }: ${ m.value }`);
   const carriers = carrierlist
     .filter(e => e.type === 'CARRIER')
-    .map(cc => {
+    .map((cc: Carrier) => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
       const valuelist = values.map(v=> v.toFixed(2)).join(',');
       return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist } #${ comment }`;
@@ -202,7 +212,7 @@ export function serialize_carrier_list(carrierlist) {
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_weighting_factors(factorsstring) {
+export function parse_weighting_factors(factorsstring: string): Array<Fp|Meta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
@@ -253,7 +263,7 @@ export function parse_weighting_factors(factorsstring) {
 //    This follows the ISO EN 52000-1 procedure for calculation of delivered,
 //    exported and weighted energy balance.
 //
-function balance_cr(cr_i_list, fp_cr, k_exp) {
+function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
   // ------------ Delivered and exported energy
   const numSteps = cr_i_list[0].values.length;
   const EMPTYVALUES = Array(numSteps).fill(0.0);
@@ -592,7 +602,7 @@ function balance_cr(cr_i_list, fp_cr, k_exp) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierlist, fp, k_exp) {
+export function energy_performance(carrierlist: Carrier[], fp: Fp[], k_exp: number) {
   const CARRIERS = [...new Set(carrierlist.map(e => e.carrier))];
 
   // Compute balance
