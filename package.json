@@ -10,7 +10,7 @@
     "test": "echo \"Testing epbdjs\" && node src/test.js",
     "test:watch": "npm run test -- -w",
     "clean": "rimraf lib/*",
-    "lint": "eslint --ignore-pattern lib/*.js --ext .mjs,.js,.jsx src/",
+    "lint": "eslint --ignore-pattern 'lib/*.js' --ext .mjs,.js,.jsx src/",
     "flow": "flow"
   },
   "keywords": [
@@ -50,7 +50,6 @@
           "targets": {
             "node": "current"
           },
-          "debug": true,
           "useBuiltIns": true
         }
       ],
