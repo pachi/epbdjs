@@ -1,15 +1,17 @@
 {
-  "name": "epbdpanel",
-  "version": "0.2.0",
-  "description": "Web panel for the epbdcalc library",
+  "name": "epbdjs",
+  "version": "1.0.0",
+  "description": "Library and CLI implementing EN ISO 52000-1 energy performance of buildings calculations",
   "private": true,
   "scripts": {
-    "build": "rimraf lib/* && babel ./src --out-dir ./lib && cp ./src/examples ./lib",
+    "build": "rimraf lib/* && babel ./src --out-dir ./lib && npm run copy",
+    "copy": "ncp ./src/examples ./lib && ncp README.md lib/README.md && ncp LICENSE lib/LICENSE && ncp TODO lib/TODO",
     "prepublish": "npm run build",
     "test": "echo \"Testing epbdjs\" && node src/test.js",
-    "test:watch": "watch 'npm run test' ./src",
+    "test:watch": "npm run test -- -w",
     "clean": "rimraf lib/*",
-    "lint": "eslint --ignore-pattern lib/*.js --ext .mjs,.js,.jsx src/"
+    "lint": "eslint --ignore-pattern lib/*.js --ext .mjs,.js,.jsx src/",
+    "flow": "flow"
   },
   "keywords": [
     "energy",
@@ -25,27 +27,39 @@
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
     "babel-eslint": "^7.2.3",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-polyfill": "^6.26.0",
-    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-env": "^1.6.0",
     "babel-preset-flow": "^6.23.0",
-    "babel-preset-stage-0": "^6.5.0",
     "eslint": "^4.6.1",
-    "eslint-loader": "^1.9.0",
     "eslint-plugin-babel": "^4.1.2",
     "eslint-plugin-flowtype": "^2.35.1",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-sorting": "^0.3.0",
-    "node-libs-browser": "^2.0.0",
+    "ncp": "^2.0.0",
     "rimraf": "^2.6.2",
     "watch": "^1.0.2"
   },
   "dependencies": {},
   "babel": {
     "presets": [
-      "es2015",
-      "stage-0"
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          },
+          "debug": true,
+          "useBuiltIns": true
+        }
+      ],
+      "flow"
+    ],
+    "plugins": [
+      "transform-es2015-destructuring",
+      "transform-es2015-parameters",
+      "transform-object-rest-spread"
     ]
   }
 }

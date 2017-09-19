@@ -6,8 +6,11 @@ test: ${BUILDDIR}/test.js ${BUILDDIR}/examples
 
 installpackages:
 	$(info [INFO]: instalación de paquetes)
-	sudo aptitude install git
-	sudo aptitude install nodejs nodejs-legacy
+	curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+	sudo aptitude install nodejs
+
+clean:
+	rm -rf lib/
 
 ${BUILDDIR}:
 	mkdir -p ${BUILDDIR}
@@ -25,5 +28,5 @@ ${BUILDDIR}/test.js: ${BUILDDIR} ${BUILDDIR}/energycalculations.js ${SRCDIR}/tes
 	./node_modules/.bin/babel -o ${BUILDDIR}/test.js ${SRCDIR}/test.js
 
 ${BUILDDIR}/examples:
-	ln -s ../${SRCDIR}/examples ${BUILDDIR}/
+	cp -r ./${SRCDIR}/examples ./${BUILDDIR}
 
