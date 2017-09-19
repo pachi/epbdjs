@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
 
-Copyright (c) 2016 Ministerio de Fomento
+Copyright (c) 2016-2017 Ministerio de Fomento
                    Instituto de Ciencias de la Construcción Eduardo Torroja (IETcc-CSIC)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
