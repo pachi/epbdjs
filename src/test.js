@@ -25,6 +25,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
 
+/* eslint-disable no-console */
 import {
   parse_carrier_list,
   parse_weighting_factors,
@@ -143,7 +144,7 @@ const TESTKEXP = 1.0;
 
 // Utilities ------------------------------------------------------------
 
-const myround = (num, ndigits = 2) => Math.round(num * Math.pow(10, ndigits)) / Math.pow(10, ndigits);
+// const myround = (num, ndigits = 2) => Math.round(num * Math.pow(10, ndigits)) / Math.pow(10, ndigits);
 const reserr = (ep1, ep2) => {
   const res = Math.sqrt(Math.pow(ep1.ren - ep2.ren, 2) + Math.pow(ep1.nren - ep2.nren, 2));
   return isNaN(res) || (res > 2.0);
