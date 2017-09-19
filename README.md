@@ -1,8 +1,8 @@
-#EPBDjs
+# EPBDjs
 
 Library implementation and CLI of the ISO EN 52000-1 "Energy performance of buildings" standard to explore NZEB indicators
 
-##Introduction
+## Introduction
 
 This software implements the *ISO EN 52000-1: Energy performance of buildings - Overarching EPB assessment - General framework and procedures* standard.
 
@@ -13,17 +13,17 @@ The following assumptions have been taken:
 - all on-site produced energy from non cogeneration sources is considered as delivered
 - the load matching factor is set to 1.0
 
-##TODO
+## TODO
 
 - allow other values of load matching factor (or functions) (formula 32, B.32)
 - get results by use items (service), maybe using the reverse method E.3 (E.3.6, E.3.7)
 
-##Usage
+## Usage
 
-###Tests
+### Tests
 **To run the tests** type ```make``` on the command line.
 
-###CLI
+### CLI
 
 Not implemented
 
