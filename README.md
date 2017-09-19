@@ -1,7 +1,7 @@
 visorepbd
 =========
 
-Implementation of the ISO EN 52000-1 standard and panel to explore NZEB indicators
+Library implementation and CLI of the ISO EN 52000-1 standard to explore NZEB indicators
 
 Introduction
 ------------
@@ -24,5 +24,4 @@ TODO
 Usage
 -----
 
-**To run the panel** type ```make``` on the command line.
 **To run the tests** type ```make test``` on the command line.
