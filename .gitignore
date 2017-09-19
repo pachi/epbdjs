@@ -1,11 +1,8 @@
 node_modules
-bower_components
+lib
 dist
 public
-venv
-secretkey.txt
 stats.json
 *.log
 *.generated.*
 npm-debug.log
-__pycache__

@@ -4,9 +4,12 @@
   "description": "Web panel for the epbdcalc library",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm -rf build/",
-    "lint": "eslint --ignore-pattern build/*.js --ext .js,.jsx app/"
+    "build": "rimraf lib/* && babel ./src --out-dir ./lib && cp ./src/examples ./lib",
+    "prepublish": "npm run build",
+    "test": "echo \"Testing epbdjs\" && node src/test.js",
+    "test:watch": "watch 'npm run test' ./src",
+    "clean": "rimraf lib/*",
+    "lint": "eslint --ignore-pattern lib/*.js --ext .mjs,.js,.jsx src/"
   },
   "keywords": [
     "energy",
@@ -34,11 +37,15 @@
     "eslint-plugin-flowtype": "^2.35.1",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-sorting": "^0.3.0",
-    "node-libs-browser": "^2.0.0"
+    "node-libs-browser": "^2.0.0",
+    "rimraf": "^2.6.2",
+    "watch": "^1.0.2"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "babel": {
-    "presets": ["es2015", "stage-0"]
+    "presets": [
+      "es2015",
+      "stage-0"
+    ]
   }
 }
