@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Library and CLI implementing EN ISO 52000-1 energy performance of buildings calculations",
   "main": "lib/index.js",
-  "private": false,
+  "repository": { "type": "git", "url": "https://github.com/pachi/epbdjs.git" },
   "scripts": {
     "build": "rimraf lib/* && babel ./src --out-dir ./lib && npm run copy",
     "copy": "ncp ./src/examples ./lib && ncp README.md lib/README.md && ncp LICENSE lib/LICENSE && ncp TODO lib/TODO",
@@ -24,7 +24,10 @@
     "energía",
     "edificios"
   ],
-  "author": "Rafael Villar Burke",
+  "author": "Rafael Villar Burke <pachi@ietcc.csic.es>",
+  "contributors": [
+    "Daniel Jiménez González <pachi@ietcc.csic.es>"
+  ],
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.26.0",
