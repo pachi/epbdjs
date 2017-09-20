@@ -1,13 +1,15 @@
 {
   "name": "epbdjs",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Library and CLI implementing EN ISO 52000-1 energy performance of buildings calculations",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/pachi/epbdjs.git"
   },
-  "bugs": { "url": "https://github.com/pachi/epbdjs/issues" },
+  "bugs": {
+    "url": "https://github.com/pachi/epbdjs/issues"
+  },
   "homepage": "https://github.com/pachi/epbdjs#README.m",
   "scripts": {
     "build": "rimraf lib/* && babel ./src --out-dir ./lib && npm run copy",
