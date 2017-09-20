@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rimraf lib/* && babel ./src --out-dir ./lib && npm run copy",
     "copy": "ncp ./src/examples ./lib && ncp README.md lib/README.md && ncp LICENSE lib/LICENSE && ncp TODO lib/TODO",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "test": "echo \"Testing epbdjs\" && node src/test.js",
     "test:watch": "npm run test -- -w",
     "clean": "rimraf lib/*",
