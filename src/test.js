@@ -26,11 +26,12 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 */
 
 /* eslint-disable no-console */
-import {
+import { 
   parse_carrier_list,
   parse_weighting_factors,
-  energy_performance } from './energycalculations.js';
-import { carrier_isvalid } from './cteepbd.js';
+  energy_performance,
+  cte
+} from './index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -211,7 +212,7 @@ function epfromfile(filename, fp, kexp) {
   const datastring = fs.readFileSync(datapath, 'utf-8');
   const carrierlist = parse_carrier_list(datastring)
     .filter(c => c.type === 'CARRIER')
-    .filter(carrier_isvalid);
+    .filter(cte.carrier_isvalid);
   return epfromdata(carrierlist, fp, kexp);
 }
 
@@ -355,7 +356,7 @@ console.log("*** Lectura de archivo .csv con metadatos");
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
-    .filter(carrier_isvalid);
+    .filter(cte.carrier_isvalid);
   // console.log(metas2[0]);
   // console.log(carriers[0]);
   if (metas.length === 70 && carriers.length === 4) {
@@ -373,7 +374,7 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
-    .filter(carrier_isvalid);
+    .filter(cte.carrier_isvalid);
   if (metas.length === 3 && carriers.length === 4) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }`);
   } else {

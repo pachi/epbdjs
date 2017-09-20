@@ -15,16 +15,22 @@ clean:
 ${BUILDDIR}:
 	mkdir -p ${BUILDDIR}
 
-${BUILDDIR}/cteepbd.js: ${SRCDIR}/cteepbd.js
-	./node_modules/.bin/babel -o ${BUILDDIR}/cteepbd.js ${SRCDIR}/cteepbd.js
+${BUILDDIR}/cte.js: ${BUILDDIR} ${SRCDIR}/cte.js
+	./node_modules/.bin/babel -o ${BUILDDIR}/cte.js ${SRCDIR}/cte.js
 
-${BUILDDIR}/vecutils.js: ${SRCDIR}/vecutils.js
-	./node_modules/.bin/babel -o ${BUILDDIR}/vecutils.js ${SRCDIR}/vecutils.js
+${BUILDDIR}/vecops.js: ${BUILDDIR} ${SRCDIR}/vecops.js
+	./node_modules/.bin/babel -o ${BUILDDIR}/vecops.js ${SRCDIR}/vecops.js
 
-${BUILDDIR}/energycalculations.js: ${BUILDDIR} ${SRCDIR}/energycalculations.js ${BUILDDIR}/cteepbd.js ${BUILDDIR}/vecutils.js
-	./node_modules/.bin/babel -o ${BUILDDIR}/energycalculations.js ${SRCDIR}/energycalculations.js
+${BUILDDIR}/utils.js: ${BUILDDIR} ${SRCDIR}/utils.js
+	./node_modules/.bin/babel -o ${BUILDDIR}/utils.js ${SRCDIR}/utils.js
 
-${BUILDDIR}/test.js: ${BUILDDIR} ${BUILDDIR}/energycalculations.js ${SRCDIR}/test.js
+${BUILDDIR}/epbd.js: ${BUILDDIR} ${BUILDDIR}/vecops.js ${SRCDIR}/epbd.js
+	./node_modules/.bin/babel -o ${BUILDDIR}/epbd.js ${SRCDIR}/epbd.js
+
+${BUILDDIR}/index.js: ${BUILDDIR} ${BUILDDIR}/epbd.js ${BUILDDIR}/cte.js ${BUILDDIR}/utils.js ${BUILDDIR}/vecops.js ${SRCDIR}/index.js
+	./node_modules/.bin/babel -o ${BUILDDIR}/index.js ${SRCDIR}/index.js
+
+${BUILDDIR}/test.js: ${BUILDDIR} ${BUILDDIR}/index.js ${SRCDIR}/test.js
 	./node_modules/.bin/babel -o ${BUILDDIR}/test.js ${SRCDIR}/test.js
 
 ${BUILDDIR}/examples:

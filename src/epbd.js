@@ -45,7 +45,7 @@ import {
   vecsum,
   veckmul,
   veclistsum,
-  vecvecsum, vecvecdif, vecvecmul, vecvecmin } from './vecutils.js';
+  vecvecsum, vecvecdif, vecvecmul, vecvecmin } from './vecops.js';
 
 // Custom exception
 function UserException(message) {
