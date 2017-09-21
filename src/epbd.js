@@ -603,13 +603,14 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
 //
 //
 export function energy_performance(carrierlist: Carrier[], fp: Fp[], k_exp: number) {
-  const CARRIERS = [...new Set(carrierlist.map(e => e.carrier))];
+  const carrierdata = carrierlist.filter(c => c.type === 'CARRIER');
+  const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
   // Compute balance
   let balance_cr_i = {};
   CARRIERS.map(carrier => {
     const fp_cr = fp.filter(e => e.carrier === carrier);
-    const cr_i_list = carrierlist.filter(e => e.carrier === carrier);
+    const cr_i_list = carrierdata.filter(e => e.carrier === carrier);
     balance_cr_i[carrier] = balance_cr(cr_i_list, fp_cr, k_exp);
   });
 
