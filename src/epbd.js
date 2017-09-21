@@ -167,7 +167,7 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
       return metaobj;
     });
 
-  return [ ...components, ...meta ];
+  return [ ...meta, ...components ];
 }
 
 /**
