@@ -147,7 +147,7 @@ export const VALIDDATA = {
   }
 };
 
-export const VALIDSERVICES = { 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' }
+export const VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' ];
 
 // Validate carrier data coherence
 export function carrier_isvalid(carrier_obj) {
