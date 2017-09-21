@@ -25,6 +25,8 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
 
+import { veclistsum, vecvecdif } from './vecops.js';
+
 // ---------------------------------------------------------------------------------------------------------
 // Default values for energy efficiency calculation
 //
@@ -148,10 +150,23 @@ export const VALIDDATA = {
 };
 
 export const VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' ];
+export const LEGACYSERVICES = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
+
+// -------------------------------------------------------------------------------------
+// Validation utilities and functions
+// -------------------------------------------------------------------------------------
+
+
+// Custom exception
+export function CteValidityException(message) {
+  this.message = message;
+  this.name = 'UserException';
+}
+
 
 // Validate carrier data coherence
 export function carrier_isvalid(carrier_obj) {
-  const { type, carrier, ctype, csubtype } = carrier_obj;
+  const { type, carrier, ctype, csubtype, service } = carrier_obj;
   if (type !== 'CARRIER') return false;
   let validcarriers;
   try {
@@ -163,6 +178,31 @@ export function carrier_isvalid(carrier_obj) {
   return false;
 }
 
+// TODO: reescribe servicios legacy
+export function checked_carriers(carrierlist) {
+  // Vectores con valores coherentes
+  const carriers = carrierlist.filter(e => e.type === 'CARRIER');
+  const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && VALIDSERVICES.includes(c.service));
+  // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
+  if (all_carriers_ok) {
+    const envcarriers = carrierlist.filter(c => c.carrier === 'MEDIOAMBIENTE');
+    const services = [... new Set(envcarriers.map(c => c.service))];
+    const balancecarriers = services.map(service => {
+      const produced = envcarriers.filter(c => c.ctype === 'PRODUCCION');
+      const consumed = envcarriers.filter(c => c.ctype === 'CONSUMO');
+      if (consumed.length === 0) return null;
+      let unbalanced = veclistsum(consumed.map(v => v.values));
+      if (produced.length !== 0) {
+        const totproduced = veclistsum(produced.map(v => v.values));
+        unbalanced = vecvecdif(unbalanced, totproduced).map(v => Math.max(0, v));
+      }
+      return { type: 'CARRIER', carrier: 'MEDIOAMBIENTE', ctype: 'PRODUCCION', csubtype: 'INSITU', service,
+        values: unbalanced, comment: 'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada' };
+    }).filter(v => v !== null);
+    return [... carrierlist, ...balancecarriers];
+  }
+  throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(carriers.filter(c => !carrier_isvalid(c))) }`);
+}
 
 // TODO: const fP = sanitize_weighting_factors(fp);
 // TODO: Podría avisar si no existe un factor: ['MEDIOAMBIENTE', 'RED', 'input', 'A', 1.000, 0.000]
