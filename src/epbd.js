@@ -380,7 +380,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
     && fp.source === 'RED'
   );
   if (!fpA_grid) {
-    throw new UserException(`No grid weighting factor found (step A)`);
+    throw new UserException(`No grid weighting factor found (step A) for carrier "${ fp.carrier }"`);
   }
   const E_we_del_cr_grid_an = {
     ren: E_del_cr_an * fpA_grid.ren,
