@@ -61,7 +61,7 @@ const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 // Flow types
 // -----------------------------------------------------------------------------------
 
-type Carrier = { type: 'CARRIER', carrier: string, ctype: string, csubtype: string, service: string, values: number[], comment: string };
+type Carrier = { type?: 'CARRIER', carrier: string, ctype: string, csubtype: string, service: string, values: number[], comment: string };
 type Meta = { type: 'META', key: string, value: string|number };
 type Fp = { type: 'FACTOR', carrier: string, source: string, dest: string, step: string, ren: number, nren: number, comment: string };
 
@@ -182,7 +182,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
     .filter(e => e.type === 'META')
     .map((m: Meta) => `#META ${ m.key }: ${ m.value }`);
   const carriers = carrierlist
-    .filter(e => e.type === 'CARRIER')
+    .filter(e => e.type === 'CARRIER' || e.type === undefined)
     .map((cc: Carrier) => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
       const valuelist = values.map(v=> v.toFixed(2)).join(',');
@@ -605,7 +605,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
 //
 //
 export function energy_performance(carrierlist: Carrier[], fp: Fp[], k_exp: number) {
-  const carrierdata = carrierlist.filter(c => c.type === 'CARRIER');
+  const carrierdata = carrierlist.filter(c => c.type === 'CARRIER' || c.type === undefined);
   const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
   // Compute balance
