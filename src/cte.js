@@ -116,12 +116,6 @@ export const FACTORESDEPASO = [
 // TODO: function cte_weighting_factors(loc, extradata=null) {}
 // TODO: función que genere lista de factores de paso según localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA)
 // TODO: y factores de paso de cogeneración, y factores para RED1 y RED2
-// TODO: usa META, LOCALIZACION, xxxx
-// TODO: Podría aplicar criterios CTE:
-// TODO:    - el factor en paso B para exportación es igual al de paso A para la importación de red
-// TODO:    - el factor input de cogeneración es 0.0, 0.0
-// TODO:    - se considera igual la exportación a la red (to_grid) que a usos NEPB (to_nEPB)
-// TODO:    - MEDIOAMBIENTE, RED, input es 1.0, 0.0
 
 // ------------------------------------------------------------------------------------
 // Constraints
@@ -155,7 +149,6 @@ export const LEGACYSERVICES = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLIN
 // -------------------------------------------------------------------------------------
 // Validation utilities and functions
 // -------------------------------------------------------------------------------------
-
 
 // Custom exception
 export function CteValidityException(message) {
@@ -204,7 +197,85 @@ export function checked_carriers(carrierlist) {
   throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(carriers.filter(c => !carrier_isvalid(c))) }`);
 }
 
-// TODO: const fP = sanitize_weighting_factors(fp);
-// TODO: Podría avisar si no existe un factor: ['MEDIOAMBIENTE', 'RED', 'input', 'A', 1.000, 0.000]
-// TODO: podría considerar que to_nEPB es igual a to_grid si no se define
-// TODO: podría considerar que to_grid es igual a input si no se define
+// Sanea factores de paso y genera los que falten si se pueden deducir
+export function checked_fps(fplist) {
+  const CARRIERS = [... new Set(fplist.map(f => f.carrier))];
+
+  let outlist = [...fplist];
+
+  // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, ren, nren
+  const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
+  if (!envinsitu) {
+    outlist.push({
+      type: 'FACTOR', carrier: 'MEDIOAMBIENTE', source: 'INSITU', dest: 'input', step: 'A',
+      ren: 1.0, nren: 0.0, comment: 'Factor de paso generado'
+    });
+  }
+
+  // Asegura que existe MEDIOAMBIENTE, RED, input, A, ren, nren
+  const envgrid = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'RED' && f.dest === 'input');
+  if (!envgrid) {
+    // MEDIOAMBIENTE, RED, input, A, ren, nren === MEDIOAMBIENTE, INSITU, input, A, ren, nren
+    const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
+    outlist.push({ ...envinsitu, source: 'RED', comment: 'Factor de paso generado' });
+  }
+
+  // Asegura que existe ELECTRICIDAD, INSITU, input, A, ren, nren si hay ELECTRICIDAD
+  const eleinsitu = outlist.find(f => f.carrier === 'ELECTRICIDAD' && f.source === 'INSITU' && f.dest === 'input');
+  if (!eleinsitu && CARRIERS.includes('ELECTRICIDAD')) {
+    outlist.push({
+      type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'INSITU', dest: 'input', step: 'A',
+      ren: 1.0, nren: 0.0, comment: 'Factor de paso generado'
+    });
+  }
+
+  // Asegura definición de factores de red para todos los vectores energéticos
+  const carrier_has_input = CARRIERS.map(c => outlist.find(
+      f => f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A'
+  ));
+  if (!carrier_has_input.every(v => v)) {
+    const missing_carriers = CARRIERS.filter((c, i) => !carrier_has_input[i]);
+    throw new CteValidityException(`Todos los vectores deben definir los factores de paso de red: "VECTOR, INSITU, input, A, fren?, fnren?". Error en "${ missing_carriers }"`);
+  }
+
+  // Asegura que todos los vectores con exportación tienen factores de paso hacia la red y hacia nEPB
+  [
+    ['ELECTRICIDAD', 'INSITU'],
+    ['ELECTRICIDAD', 'COGENERACION'],
+    ['MEDIOAMBIENTE', 'INSITU']
+  ].map(([c, s]) => {
+    const cfpsA = outlist.filter(f => f.carrier === c && f.source === s && f.step === 'A');
+    const cfpsB = outlist.filter(f => f.carrier === c && f.source === s && f.step === 'B');
+    const fpAinput = cfpsA.find(f => f.dest === 'input');
+    const fpAredinput = outlist.find(f =>
+      f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A');
+    if (!cfpsA.find(f => f.dest === 'to_grid')) {
+      // VECTOR, SRC, to_grid, A, ren, nren === VECTOR, SRC, input, A, ren, nren
+      const newvec = { ...fpAinput, dest: 'to_grid', comment: 'Factor de paso generado' };
+      outlist.push(newvec);
+    }
+    if (!cfpsA.find(f => f.dest === 'to_nEPB')) {
+      // VECTOR, SRC, to_nEPB, A, ren, nren === VECTOR, SRC, input, A, ren, nren
+      outlist.push({ ...fpAinput, dest: 'to_nEPB', comment: 'Factor de paso generado' });
+    }
+    if (!cfpsB.find(f => f.dest === 'to_grid')) {
+      // VECTOR, SRC, to_grid, B, ren, nren === VECTOR, RED, input, A, ren, nren
+      outlist.push({ ...fpAredinput, source: s, dest: 'to_grid', step: 'B', comment: 'Factor de paso generado' });
+    }
+    if (!cfpsB.find(f => f.dest === 'to_nEPB')) {
+      // VECTOR, SRC, to_nEPB, B, ren, nren === VECTOR, RED, input, A, ren, nren
+      outlist.push({ ...fpAredinput, source: s, dest: 'to_nEPB', step: 'B', comment: 'Factor de paso generado' });
+    }
+  });
+
+  // El factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
+  const cogeninput = outlist.find(f => f.carrier === 'ELECTRICIDAD' && f.source === 'COGENERACION' && f.dest === 'input');
+  if (!cogeninput && outlist.map(v => v.source).includes('COGENERACION')) {
+    outlist.push({
+      type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'input', step: 'A',
+      ren: 0.0, nren: 0.0, comment: 'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'
+    });
+  }
+
+  return outlist;
+}
