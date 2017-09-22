@@ -60,3 +60,19 @@ export function ep2dict(EP, area = 1.0) {
   const EPrer = (EPtotal === 0) ? 0 : EPren / EPtotal;
   return { EPAren, EPAnren, EPAtotal, EPArer, EPren, EPnren, EPtotal, EPrer };
 }
+
+export function fp2string(fp) {
+  if(fp) {
+    const { carrier, source, dest, step, ren, nren } = fp;
+    return `"${carrier}, ${source}, ${dest}, ${step}, ${ren.toFixed(2)}, ${nren.toFixed(2)}"`;
+  }
+  return fp;
+}
+
+export function carrier2string(carrier) {
+  if(carrier) {
+    const { carrier, ctype, csubtype, service, values, comment } = carrier;
+    return `"${carrier}, ${ctype}, ${csubtype}, ${service}, ${values.map(v => v.toFixed(2))}, ${comment}"`;
+  }
+  return carrier;
+}
