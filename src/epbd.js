@@ -265,6 +265,7 @@ export function parse_weighting_factors(factorsstring: string): Array<Fp|Meta> {
 //
 function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
   // ------------ Delivered and exported energy
+  const CURRENTCARRIER = cr_i_list[0].carrier;
   const numSteps = cr_i_list[0].values.length;
   const EMPTYVALUES = Array(numSteps).fill(0.0);
 
@@ -371,6 +372,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
   // NOTE: This allows using annual quantities and not timestep expressions
 
   // * Weighted energy for delivered energy: the cost of producing that energy
+  // TODO: we could avoid forcing the definition of some factors if no related energy input does exist
 
   // 1) Delivered energy from the grid
   // NOTE: grid delivered energy is energy which is used but not produced (on-site or nearby)
@@ -380,7 +382,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
     && fp.source === 'RED'
   );
   if (!fpA_grid) {
-    throw new UserException(`No grid weighting factor found (step A) for carrier "${ fp.carrier }"`);
+    throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, RED, input, A"`);
   }
   const E_we_del_cr_grid_an = {
     ren: E_del_cr_an * fpA_grid.ren,
@@ -393,7 +395,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
     (obj, gen) => {
       const fpA_pr_i = fp_cr.find(fp => fp.dest === 'input' && fp.step === 'A' && fp.source === gen);
       if (!fpA_pr_i) {
-        throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+        throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, ${ gen }, input, A"`);
       }
       const E_pr_i = E_pr_cr_pr_i_an[gen];
       if (E_pr_i === 0) { return obj; }
@@ -453,7 +455,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
           const F_g = F_pr_i[gen];
           const fpA_g = fpA_nEPus_i.find(fp => fp.source === gen);
           if (!fpA_g) {
-            throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+            throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, ${ gen }, to_nEPB, A"`);
           }
           return { ren: acc.ren + F_g * fpA_g.ren, nren: acc.nren + F_g * fpA_g.nren };
         },
@@ -472,7 +474,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
           const F_g = F_pr_i[gen];
           const fpA_g = fpA_grid_i.find(fp => fp.source === gen);
           if (!fpA_g) {
-            throw new UserException(`No weighting factor (step A) found for source ${ gen }`);
+            throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, ${ gen }, to_grid, A"`);
           }
           return { ren: acc.ren + F_g * fpA_g.ren, nren: acc.nren + F_g * fpA_g.nren };
         },
@@ -501,7 +503,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
           const F_g = F_pr_i[gen];
           const fpB_g = fpB_nEPus_i.find(fp => fp.source === gen);
           if (!fpB_g) {
-            throw new UserException(`No weighting factor (step B) found for source ${ gen }`);
+            throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, ${ gen }, to_nEPB, B"`);
           }
           return { ren: acc.ren + F_g * fpB_g.ren, nren: acc.nren + F_g * fpB_g.nren };
         },
@@ -520,7 +522,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
           const F_g = F_pr_i[gen];
           const fpB_g = fpB_grid_i.find(fp => fp.source === gen);
           if (!fpB_g) {
-            throw new UserException(`No weighting factor (step B) found for source ${ gen }`);
+            throw new UserException(`No weighting factor found: "${ CURRENTCARRIER }, ${ gen }, to_grid, B"`);
           }
           return { ren: acc.ren + F_g * fpB_g.ren, nren: acc.nren + F_g * fpB_g.nren };
         },
