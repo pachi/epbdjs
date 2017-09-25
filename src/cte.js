@@ -148,6 +148,12 @@ export const VALIDDATA = {
 export const VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' ];
 export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
 
+// Valores por defecto para exportación (paso A) de electricidad cogenerada
+const COGEN_DEFAULTS = {
+  'to_grid': { ren: 0, nren: 2.5 },
+  'to_nEPB': { ren: 0, nren: 2.5 }
+};
+
 // -------------------------------------------------------------------------------------
 // Validation utilities and functions
 // -------------------------------------------------------------------------------------
@@ -209,9 +215,10 @@ export function cte_parse_carrier_list(datastring) {
 }
 
 // Sanea factores de paso y genera los que falten si se pueden deducir
-export function cte_parse_weighting_factors(factorsstring) {
+export function cte_parse_weighting_factors(factorsstring, cogen=COGEN_DEFAULTS) {
   const fplist = parse_weighting_factors(factorsstring);
   const CARRIERS = [... new Set(fplist.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
+  const HASCOGEN = fplist.map(v => v.source).includes('COGENERACION');
 
   let outlist = [...fplist];
 
@@ -253,6 +260,12 @@ export function cte_parse_weighting_factors(factorsstring) {
     throw new CteValidityException(`Todos los vectores deben definir los factores de paso de red: "VECTOR, INSITU, input, A, fren?, fnren?". Error en "${ missing_carriers }"`);
   }
 
+  // En paso A, el factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
+  outlist.push({
+    type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'input', step: 'A',
+    ren: 0.0, nren: 0.0, comment: 'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'
+  });
+
   // Asegura que todos los vectores con exportación tienen factores de paso hacia la red y hacia nEPB
   [
     ['ELECTRICIDAD', 'INSITU'],
@@ -264,15 +277,36 @@ export function cte_parse_weighting_factors(factorsstring) {
     const fpAinput = cfpsA.find(f => f.dest === 'input');
     const fpAredinput = outlist.find(f =>
       f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A');
+
     if (!cfpsA.find(f => f.dest === 'to_grid')) {
-      // VECTOR, SRC, to_grid, A, ren, nren === VECTOR, SRC, input, A, ren, nren
-      const newvec = { ...fpAinput, dest: 'to_grid', comment: 'Factor de paso generado' };
-      outlist.push(newvec);
+      if (s !== 'COGENERACION') {
+        // VECTOR, SRC, to_grid, A, ren, nren === VECTOR, SRC, input, A, ren, nren
+        const newvec = { ...fpAinput, dest: 'to_grid', comment: 'Factor de paso generado' };
+        outlist.push(newvec);
+      } else {
+        // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
+        outlist.push({
+          type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_grid', step: 'A',
+          ren: COGEN_DEFAULTS.to_grid.ren, nren: COGEN_DEFAULTS.to_grid.nren,
+          comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
+        });
+      }
     }
     if (!cfpsA.find(f => f.dest === 'to_nEPB')) {
-      // VECTOR, SRC, to_nEPB, A, ren, nren === VECTOR, SRC, input, A, ren, nren
-      outlist.push({ ...fpAinput, dest: 'to_nEPB', comment: 'Factor de paso generado' });
+      if (s !== 'COGENERACION') {
+        // VECTOR, SRC, to_nEPB, A, ren, nren === VECTOR, SRC, input, A, ren, nren
+        outlist.push({ ...fpAinput, dest: 'to_nEPB', comment: 'Factor de paso generado' });
+      } else {
+        // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
+        outlist.push({
+          type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_nEPB', step: 'A',
+          ren: COGEN_DEFAULTS.to_nEPB.ren, nren: COGEN_DEFAULTS.to_nEPB.nren,
+          comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
+        });
+      }
     }
+
+
     if (!cfpsB.find(f => f.dest === 'to_grid')) {
       // VECTOR, SRC, to_grid, B, ren, nren === VECTOR, RED, input, A, ren, nren
       outlist.push({ ...fpAredinput, source: s, dest: 'to_grid', step: 'B', comment: 'Factor de paso generado' });
@@ -282,15 +316,6 @@ export function cte_parse_weighting_factors(factorsstring) {
       outlist.push({ ...fpAredinput, source: s, dest: 'to_nEPB', step: 'B', comment: 'Factor de paso generado' });
     }
   });
-
-  // El factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
-  const cogeninput = outlist.find(f => f.carrier === 'ELECTRICIDAD' && f.source === 'COGENERACION' && f.dest === 'input');
-  if (!cogeninput && outlist.map(v => v.source).includes('COGENERACION')) {
-    outlist.push({
-      type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'input', step: 'A',
-      ren: 0.0, nren: 0.0, comment: 'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'
-    });
-  }
 
   return outlist;
 }
