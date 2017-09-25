@@ -25,6 +25,12 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
 
+// Definitions
+
+export const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
+export const TAG_REGEX = /[A-Za-z]+[0-9]*/;
+export const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
+
 // Utility output functions ---------------------------------------------------
 
 // Format energy efficiency indicators as string from primary energy data

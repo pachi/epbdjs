@@ -41,6 +41,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
   - get results by use items (service), maybe using the reverse method E.3 (E.3.6, E.3.7)
 */
 
+import { FLOAT_REGEX, TAG_REGEX, LEGACY_SERVICE_TAG_REGEX } from './utils.js';
 import {
   vecsum,
   veckmul,
@@ -52,10 +53,6 @@ function UserException(message) {
   this.message = message;
   this.name = 'UserException';
 }
-
-const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
-const TAG_REGEX = /[A-Za-z]+[0-9]*/;
-const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 
 // -----------------------------------------------------------------------------------
 // Flow types
