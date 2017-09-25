@@ -118,8 +118,8 @@ export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
         service = maybeservice === '' ? 'NODEFINIDO' : maybeservice;
         values = values.splice(1);
       } else {
-        const legacy_service = comment.match(LEGACY_SERVICE_TAG_REGEX);
-        service = legacy_service ? legacy_service[0] : 'NODEFINIDO';
+        const legacy_service_match = comment.match(LEGACY_SERVICE_TAG_REGEX);
+        service = legacy_service_match ? legacy_service_match[0] : 'NODEFINIDO';
       }
 
       values = values.map(Number);
