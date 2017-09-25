@@ -48,19 +48,13 @@ import {
   veclistsum,
   vecvecsum, vecvecdif, vecvecmul, vecvecmin } from './vecops.js';
 
+import type { TCarrier, TMeta, TFp } from './types.js';
+
 // Custom exception
 function UserException(message) {
   this.message = message;
   this.name = 'UserException';
 }
-
-// -----------------------------------------------------------------------------------
-// Flow types
-// -----------------------------------------------------------------------------------
-
-type Carrier = { type?: 'CARRIER', carrier: string, ctype: string, csubtype: string, service: string, values: number[], comment: string };
-type Meta = { type: 'META', key: string, value: string|number };
-type Fp = { type: 'FACTOR', carrier: string, source: string, dest: string, step: string, ren: number, nren: number, comment: string };
 
 // -----------------------------------------------------------------------------------
 // Input/Output functions
@@ -102,7 +96,7 @@ type Fp = { type: 'FACTOR', carrier: string, source: string, dest: string, step:
 // * objects with type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrier_list(datastring: string): Array<Carrier|Meta> {
+export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
@@ -160,7 +154,7 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
     .map(line => {
       const [key, svalue] = line.split(':', 2).map(l => l.trim());
       const value = svalue.match(FLOAT_REGEX) ? parseFloat(svalue) : svalue;
-      const metaobj: Meta = { type: 'META', key, value };
+      const metaobj: TMeta = { type: 'META', key, value };
       return metaobj;
     });
 
@@ -177,10 +171,10 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
 export function serialize_carrier_list(carrierlist: Array<any>): string {
   const metas = carrierlist
     .filter(e => e.type === 'META')
-    .map((m: Meta) => `#META ${ m.key }: ${ m.value }`);
+    .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
   const carriers = carrierlist
     .filter(e => e.type === 'CARRIER' || e.type === undefined)
-    .map((cc: Carrier) => {
+    .map((cc: TCarrier) => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
       const valuelist = values.map(v=> v.toFixed(2)).join(',');
       return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist } #${ comment }`;
@@ -209,7 +203,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_weighting_factors(factorsstring: string): Array<Fp|Meta> {
+export function parse_weighting_factors(factorsstring: string): Array<TFp|TMeta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
@@ -260,7 +254,7 @@ export function parse_weighting_factors(factorsstring: string): Array<Fp|Meta> {
 //    This follows the ISO EN 52000-1 procedure for calculation of delivered,
 //    exported and weighted energy balance.
 //
-function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
+function balance_cr(cr_i_list: TCarrier[], fp_cr: TFp[], k_exp: number) {
   // ------------ Delivered and exported energy
   const CURRENTCARRIER = cr_i_list[0].carrier;
   const numSteps = cr_i_list[0].values.length;
@@ -601,7 +595,7 @@ function balance_cr(cr_i_list: Carrier[], fp_cr: Fp[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierlist: Carrier[], fp: Fp[], k_exp: number) {
+export function energy_performance(carrierlist: TCarrier[], fp: TFp[], k_exp: number) {
   const carrierdata = carrierlist.filter(c => c.type === 'CARRIER' || c.type === undefined);
   const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
