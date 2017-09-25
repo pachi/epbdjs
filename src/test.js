@@ -30,8 +30,7 @@ import {
   parse_carrier_list,
   parse_weighting_factors,
   energy_performance,
-  cte,
-  utils
+  cte
 } from './index.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -391,13 +390,11 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
-  const fplist = parse_weighting_factors(fpstring);
-  const fp = cte.checked_fps(fplist);
+  const fp = cte.cte_parse_weighting_factors(fpstring);
   //console.log("FPS corregidos: ", fp);
 
   const datastring = fs.readFileSync(CARRIERSFILE, 'utf-8');
-  const carrierlist = parse_carrier_list(datastring);
-  const carriers = cte.checked_carriers(carrierlist);
+  const carriers = cte.cte_parse_carrier_list(datastring);
   //console.log("Carriers encontrados: ", carriers);
 
   const balance = energy_performance(carriers, fp, KEXP);

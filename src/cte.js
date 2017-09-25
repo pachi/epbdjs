@@ -26,6 +26,8 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 */
 
 import { veclistsum, vecvecdif } from './vecops.js';
+import { parse_carrier_list, parse_weighting_factors } from './epbd.js';
+import { LEGACY_SERVICE_TAG_REGEX } from './utils.js';
 
 // ---------------------------------------------------------------------------------------------------------
 // Default values for energy efficiency calculation
@@ -144,7 +146,7 @@ export const VALIDDATA = {
 };
 
 export const VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' ];
-export const LEGACYSERVICES = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
+export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
 
 // -------------------------------------------------------------------------------------
 // Validation utilities and functions
@@ -156,7 +158,6 @@ export function CteValidityException(message) {
   this.name = 'UserException';
 }
 
-
 // Validate carrier data coherence
 export function carrier_isvalid(carrier_obj) {
   const { type, carrier, ctype, csubtype, service } = carrier_obj;
@@ -167,12 +168,22 @@ export function carrier_isvalid(carrier_obj) {
   } catch (e) {
     return false;
   }
-  if (validcarriers.includes(carrier)) return true;
-  return false;
+  if (!validcarriers.includes(carrier)) return false;
+
+  return true;
 }
 
-// TODO: reescribe servicios legacy
-export function checked_carriers(carrierlist) {
+// Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
+export function cte_parse_carrier_list(datastring) {
+  const carrierlist = parse_carrier_list(datastring)
+    .map(c => { // Reescribe servicios legacy
+      if (c.type === 'CARRIER' && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
+        return { ...c, service: LEGACYSERVICESMAP[c.service] }
+      } else {
+        return c;
+      }
+    })
+
   // Vectores con valores coherentes
   const carriers = carrierlist.filter(e => e.type === 'CARRIER');
   const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && VALIDSERVICES.includes(c.service));
@@ -198,13 +209,17 @@ export function checked_carriers(carrierlist) {
 }
 
 // Sanea factores de paso y genera los que falten si se pueden deducir
-export function checked_fps(fplist) {
-  const CARRIERS = [... new Set(fplist.map(f => f.carrier))];
+export function cte_parse_weighting_factors(factorsstring) {
+  const fplist = parse_weighting_factors(factorsstring);
+  const CARRIERS = [... new Set(fplist.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
 
   let outlist = [...fplist];
 
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, ren, nren
-  const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
+  const envinsitu = outlist.find(f =>
+    f.carrier === 'MEDIOAMBIENTE'
+    && f.source === 'INSITU'
+    && f.dest === 'input');
   if (!envinsitu) {
     outlist.push({
       type: 'FACTOR', carrier: 'MEDIOAMBIENTE', source: 'INSITU', dest: 'input', step: 'A',
