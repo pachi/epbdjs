@@ -9,6 +9,9 @@ installpackages:
 	curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 	sudo aptitude install nodejs
 
+flow:
+	flow
+
 clean:
 	rm -rf lib/
 
