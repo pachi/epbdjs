@@ -149,7 +149,7 @@ export const VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', '
 export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
 
 // Valores por defecto para exportación (paso A) de electricidad cogenerada
-const COGEN_DEFAULTS = {
+const CTE_COGEN_DEFAULTS = {
   'to_grid': { ren: 0, nren: 2.5 },
   'to_nEPB': { ren: 0, nren: 2.5 }
 };
@@ -215,7 +215,7 @@ export function cte_parse_carrier_list(datastring) {
 }
 
 // Sanea factores de paso y genera los que falten si se pueden deducir
-export function cte_parse_weighting_factors(factorsstring, cogen=COGEN_DEFAULTS) {
+export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAULTS) {
   const fplist = parse_weighting_factors(factorsstring);
   const CARRIERS = [... new Set(fplist.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
   const HASCOGEN = fplist.map(v => v.source).includes('COGENERACION');
@@ -287,7 +287,7 @@ export function cte_parse_weighting_factors(factorsstring, cogen=COGEN_DEFAULTS)
         // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
         outlist.push({
           type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_grid', step: 'A',
-          ren: COGEN_DEFAULTS.to_grid.ren, nren: COGEN_DEFAULTS.to_grid.nren,
+          ren: CTE_COGEN_DEFAULTS.to_grid.ren, nren: CTE_COGEN_DEFAULTS.to_grid.nren,
           comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
         });
       }
@@ -300,7 +300,7 @@ export function cte_parse_weighting_factors(factorsstring, cogen=COGEN_DEFAULTS)
         // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
         outlist.push({
           type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_nEPB', step: 'A',
-          ren: COGEN_DEFAULTS.to_nEPB.ren, nren: COGEN_DEFAULTS.to_nEPB.nren,
+          ren: CTE_COGEN_DEFAULTS.to_nEPB.ren, nren: CTE_COGEN_DEFAULTS.to_nEPB.nren,
           comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
         });
       }
