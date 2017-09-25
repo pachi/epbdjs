@@ -160,7 +160,7 @@ export function CteValidityException(message) {
 
 // Validate carrier data coherence
 export function carrier_isvalid(carrier_obj) {
-  const { type, carrier, ctype, csubtype, service } = carrier_obj;
+  const { type, carrier, ctype, csubtype } = carrier_obj;
   if (type !== 'CARRIER') return false;
   let validcarriers;
   try {
