@@ -92,7 +92,8 @@ ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
-const CTEFPSTRING = `vector, fuente, uso, step, ren, nren
+const CTEFP = parse_weighting_factors(
+  `vector, fuente, uso, step, ren, nren
 #valores de la propuesta del documento reconocido del IDAE de 03/02/2014, página 14
 #META FUENTEFP: CTE2013
 
@@ -125,9 +126,7 @@ ELECTRICIDAD, COGENERACION, input,   A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
-ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`;
-
-const CTEFP = parse_weighting_factors(CTEFPSTRING);
+ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
 // data from ejemplo3PVBdC_normativo
 const ENERGYDATALIST = [
@@ -335,9 +334,8 @@ check('J9 electricity monthly kexp=1.0',
 
 console.log("*** Lectura de cadena de factores de paso");
 {
-  const fp_list = parse_weighting_factors(CTEFPSTRING);
-  const metas = fp_list.filter(e => e.type === 'META');
-  const fps = fp_list.filter(e => e.type === 'FACTOR');
+  const metas = CTEFP.filter(e => e.type === 'META');
+  const fps = CTEFP.filter(e => e.type === 'FACTOR');
   console.log(metas[0]);
   console.log(fps[0]);
   if (metas.length === 1 && fps.length === 21) {
