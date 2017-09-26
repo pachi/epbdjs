@@ -27,7 +27,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 
 import { veclistsum, vecvecdif } from './vecops.js';
 import { parse_carrier_list, parse_weighting_factors } from './epbd.js';
-import { LEGACY_SERVICE_TAG_REGEX } from './utils.js';
+import { LEGACY_SERVICE_TAG_REGEX, new_carrier, new_factor, new_meta } from './utils.js';
 
 // ---------------------------------------------------------------------------------------------------------
 // Default values for energy efficiency calculation
@@ -41,83 +41,81 @@ import { LEGACY_SERVICE_TAG_REGEX } from './utils.js';
 
 export const K_EXP = 0.0;
 export const FACTORESDEPASO = [
-        // FpA - weighting factors accounting for the resources used to produce this energy
-        // FpB - weighting factors accounting for the resources avoided by the external grid due to the export
-        //  Energy carrier       source          dest        step Fpren  Fpnren
-        ['ELECTRICIDAD',        'RED',          'input',     'A', 0.414, 1.954], // Delivered energy
-        ['ELECTRICIDAD',        'INSITU',       'input',     'A', 1.000, 0.000], // Produced energy
-        ['ELECTRICIDAD',        'INSITU',       'to_grid',   'A', 1.000, 0.000], // Produced and exported to the grid
-        ['ELECTRICIDAD',        'INSITU',       'to_nEPB',   'A', 1.000, 0.000], // Produced and exported to nEPB uses
-        ['ELECTRICIDAD',        'INSITU',       'to_grid',   'B', 0.414, 1.954], // Savings to the grid due to produced and exported to the grid energy
-        ['ELECTRICIDAD',        'INSITU',       'to_nEPB',   'B', 0.414, 1.954], // Savings to the grid due to produced and exported to nEPB uses
-        ['ELECTRICIDAD',        'COGENERACION', 'input',     'A', 0.000, 0.000], // There is no delivery from grid for this carrier
-        ['ELECTRICIDAD',        'COGENERACION', 'to_grid',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDAD',        'COGENERACION', 'to_nEPB',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDAD',        'COGENERACION', 'to_grid',   'B', 0.414, 1.954], // Savings to the grid when exporting to the grid
-        ['ELECTRICIDAD',        'COGENERACION', 'to_nEPB',   'B', 0.414, 1.954], // Savings to the grid when exporting to nEPB uses
+  // Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)
+  // FpA - weighting factors accounting for the resources used to produce this energy
+  // FpB - weighting factors accounting for the resources avoided by the external grid due to the export
+  //  Energy carrier       source          dest        step Fpren  Fpnren
+  ['ELECTRICIDAD', 'RED', 'input', 'A', 0.414, 1.954, 'Recursos usados para suministrar electricidad (peninsular) desde la red'],
+  ['ELECTRICIDAD', 'INSITU', 'input', 'A', 1.000, 0.000, 'Recursos usados para producir electricidad in situ'],
+  ['ELECTRICIDAD', 'INSITU', 'to_grid', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a la red'],
+  ['ELECTRICIDAD', 'INSITU', 'to_nEPB', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a usos no EPB'],
+  ['ELECTRICIDAD', 'INSITU', 'to_grid', 'B', 0.414, 1.954, 'Recursos ahorrados a la red (península) por la electricidad producida in situ y exportada a la red'],
+  ['ELECTRICIDAD', 'INSITU', 'to_nEPB', 'B', 0.414, 1.954, 'Recursos ahorrados a la red (península) por la electricidad producida in situ y exportada a usos no EPB'],
 
-        ['ELECTRICIDADBALEARES','RED',          'input',     'A', 0.082, 2.968], // Delivered energy
-        ['ELECTRICIDADBALEARES','INSITU',       'input',     'A', 1.000, 0.000], // Produced energy
-        ['ELECTRICIDADBALEARES','INSITU',       'to_grid',   'A', 1.000, 0.000], // Produced and exported to the grid
-        ['ELECTRICIDADBALEARES','INSITU',       'to_nEPB',   'A', 1.000, 0.000], // Produced and exported to nEPB uses
-        ['ELECTRICIDADBALEARES','INSITU',       'to_grid',   'B', 0.082, 2.968], // Savings to the grid due to produced and exported to the grid energy
-        ['ELECTRICIDADBALEARES','INSITU',       'to_nEPB',   'B', 0.082, 2.968], // Savings to the grid due to produced and exported to nEPB uses
-        ['ELECTRICIDADBALEARES','COGENERACION', 'input',     'A', 0.000, 0.000], // There is no delivery from grid for this carrier
-        ['ELECTRICIDADBALEARES','COGENERACION', 'to_grid',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADBALEARES','COGENERACION', 'to_nEPB',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADBALEARES','COGENERACION', 'to_grid',   'B', 0.082, 2.968], // Savings to the grid when exporting to the grid
-        ['ELECTRICIDADBALEARES','COGENERACION', 'to_nEPB',   'B', 0.082, 2.968], // Savings to the grid when exporting to nEPB uses
+  ['ELECTRICIDAD', 'COGENERACION', 'input', 'A', 0.000, 0.000, 'Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)'],
+  ['ELECTRICIDAD', 'COGENERACION', 'to_grid', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)'],
+  ['ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)'],
+  ['ELECTRICIDAD', 'COGENERACION', 'to_grid', 'B', 0.414, 1.954, 'Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red'],
+  ['ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'B', 0.414, 1.954, 'Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red'],
 
-        ['ELECTRICIDADCANARIAS','RED',          'input',     'A', 0.070, 2.924], // Delivered energy
-        ['ELECTRICIDADCANARIAS','INSITU',       'input',     'A', 1.000, 0.000], // Produced energy
-        ['ELECTRICIDADCANARIAS','INSITU',       'to_grid',   'A', 1.000, 0.000], // Produced and exported to the grid
-        ['ELECTRICIDADCANARIAS','INSITU',       'to_nEPB',   'A', 1.000, 0.000], // Produced and exported to nEPB uses
-        ['ELECTRICIDADCANARIAS','INSITU',       'to_grid',   'B', 0.070, 2.924], // Savings to the grid due to produced and exported to the grid energy
-        ['ELECTRICIDADCANARIAS','INSITU',       'to_nEPB',   'B', 0.070, 2.924], // Savings to the grid due to produced and exported to nEPB uses
-        ['ELECTRICIDADCANARIAS','COGENERACION', 'input',     'A', 0.000, 0.000], // There is no delivery from grid for this carrier
-        ['ELECTRICIDADCANARIAS','COGENERACION', 'to_grid',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADCANARIAS','COGENERACION', 'to_nEPB',   'A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADCANARIAS','COGENERACION', 'to_grid',   'B', 0.070, 2.924], // Savings to the grid when exporting to the grid
-        ['ELECTRICIDADCANARIAS','COGENERACION', 'to_nEPB',   'B', 0.070, 2.924], // Savings to the grid when exporting to nEPB uses
+  ['ELECTRICIDADBALEARES', 'RED', 'input', 'A', 0.082, 2.968, 'Recursos usados para suministrar electricidad (Baleares) desde la red'],
+  ['ELECTRICIDADBALEARES', 'INSITU', 'input', 'A', 1.000, 0.000, 'Recursos usados para producir electricidad in situ'],
+  ['ELECTRICIDADBALEARES', 'INSITU', 'to_grid', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a la red'],
+  ['ELECTRICIDADBALEARES', 'INSITU', 'to_nEPB', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a usos no EPB'],
+  ['ELECTRICIDADBALEARES', 'INSITU', 'to_grid', 'B', 0.082, 2.968, 'Recursos ahorrados a la red (Baleares) por la electricidad producida in situ y exportada a la red'],
+  ['ELECTRICIDADBALEARES', 'INSITU', 'to_nEPB', 'B', 0.082, 2.968, 'Recursos ahorrados a la red (Baleares) por la electricidad producida in situ y exportada a usos no EPB'],
 
-        ['ELECTRICIDADCEUTAMELILLA','RED',      'input',     'A', 0.072, 2.718], // Delivered energy
-        ['ELECTRICIDADCEUTAMELILLA','INSITU',   'input',     'A', 1.000, 0.000], // Produced energy
-        ['ELECTRICIDADCEUTAMELILLA','INSITU',   'to_grid',   'A', 1.000, 0.000], // Produced and exported to the grid
-        ['ELECTRICIDADCEUTAMELILLA','INSITU',   'to_nEPB',   'A', 1.000, 0.000], // Produced and exported to nEPB uses
-        ['ELECTRICIDADCEUTAMELILLA','INSITU',   'to_grid',   'B', 0.072, 2.718], // Savings to the grid due to produced and exported to the grid energy
-        ['ELECTRICIDADCEUTAMELILLA','INSITU',   'to_nEPB',   'B', 0.072, 2.718], // Savings to the grid due to produced and exported to nEPB uses
-        ['ELECTRICIDADCEUTAMELILLA','COGENERACION','input',  'A', 0.000, 0.000], // There is no delivery from grid for this carrier
-        ['ELECTRICIDADCEUTAMELILLA','COGENERACION','to_grid','A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADCEUTAMELILLA','COGENERACION','to_nEPB','A', 0.000, 2.500], // User defined!
-        ['ELECTRICIDADCEUTAMELILLA','COGENERACION','to_grid','B', 0.072, 2.718], // Savings to the grid when exporting to the grid
-        ['ELECTRICIDADCEUTAMELILLA','COGENERACION','to_nEPB','B', 0.072, 2.718], // Savings to the grid when exporting to nEPB uses
+  ['ELECTRICIDADBALEARES', 'COGENERACION', 'input', 'A', 0.000, 0.000, 'Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)'],
+  ['ELECTRICIDADBALEARES', 'COGENERACION', 'to_grid', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)'],
+  ['ELECTRICIDADBALEARES', 'COGENERACION', 'to_nEPB', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)'],
+  ['ELECTRICIDADBALEARES', 'COGENERACION', 'to_grid', 'B', 0.082, 2.968, 'Recursos ahorrados a la red (Baleares) por la electricidad cogenerada y exportada a la red'],
+  ['ELECTRICIDADBALEARES', 'COGENERACION', 'to_nEPB', 'B', 0.082, 2.968, 'Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red'],
 
-        ['MEDIOAMBIENTE',       'RED',          'input',     'A', 1.000, 0.000], // Grid is able to deliver this carrier
-        ['MEDIOAMBIENTE',       'INSITU',       'input',     'A', 1.000, 0.000], // in-situ production of this carrier
-        ['MEDIOAMBIENTE',       'INSITU',       'to_grid',   'A', 0.000, 0.000], // export to grid is not accounted for
-        ['MEDIOAMBIENTE',       'INSITU',       'to_nEPB',   'A', 1.000, 0.000], // export to nEPB uses in step A
-        ['MEDIOAMBIENTE',       'INSITU',       'to_grid',   'B', 0.000, 0.000], // Savings to the grid when exporting to grid
-        ['MEDIOAMBIENTE',       'INSITU',       'to_nEPB',   'B', 1.000, 0.000], // Savings to the grid when exporting to nEPB uses
+  ['ELECTRICIDADCANARIAS', 'RED', 'input', 'A', 0.070, 2.924, 'Recursos usados para suministrar electricidad (Canarias) desde la red'],
+  ['ELECTRICIDADCANARIAS', 'INSITU', 'input', 'A', 1.000, 0.000, 'Recursos usados para producir electricidad in situ'],
+  ['ELECTRICIDADCANARIAS', 'INSITU', 'to_grid', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a la red'],
+  ['ELECTRICIDADCANARIAS', 'INSITU', 'to_nEPB', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a usos no EPB'],
+  ['ELECTRICIDADCANARIAS', 'INSITU', 'to_grid', 'B', 0.070, 2.924, 'Recursos ahorrados a la red (Canarias) por la electricidad producida in situ y exportada a la red'],
+  ['ELECTRICIDADCANARIAS', 'INSITU', 'to_nEPB', 'B', 0.070, 2.924, 'Recursos ahorrados a la red (Canarias) por la electricidad producida in situ y exportada a usos no EPB'],
 
-        // BIOCARBURANTE == BIOMASA DENSIFICADA (PELLETS)
-        ['BIOCARBURANTE',       'RED',          'input',     'A', 1.028, 0.085], // Delivered energy
-        ['BIOMASA',             'RED',          'input',     'A', 1.003, 0.034], // Delivered energy
-        ['BIOMASADENSIFICADA',  'RED',          'input',     'A', 1.028, 0.085], // Delivered energy
-        ['CARBON',              'RED',          'input',     'A', 0.002, 1.082], // Delivered energy
-        // FUELOIL == GASOLEO
-        ['FUELOIL',             'RED',          'input',     'A', 0.003, 1.179], // Delivered energy
-        ['GASNATURAL',          'RED',          'input',     'A', 0.005, 1.190], // Delivered energy
-        ['GASOLEO',             'RED',          'input',     'A', 0.003, 1.179], // Delivered energy
-        ['GLP',                 'RED',          'input',     'A', 0.030, 1.201], // Delivered energy
-        ['RED1',                'RED',          'input',     'A', 0.000, 1.300], // User defined!, district heating/cooling carrier
-        ['RED2',                'RED',          'input',     'A', 0.000, 1.300]  // User defined!, district heating/cooling carrier
-].map(([carrier, source, dest, step, ren, nren]) => {
-  return { type: 'FACTOR', carrier, source, dest, step, ren, nren };
-});
+  ['ELECTRICIDADCANARIAS', 'COGENERACION', 'input', 'A', 0.000, 0.000, 'Recursos usados para suministrar electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)'],
+  ['ELECTRICIDADCANARIAS', 'COGENERACION', 'to_grid', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)'],
+  ['ELECTRICIDADCANARIAS', 'COGENERACION', 'to_nEPB', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)'],
+  ['ELECTRICIDADCANARIAS', 'COGENERACION', 'to_grid', 'B', 0.070, 2.924, 'Recursos ahorrados a la red (Canarias) por la electricidad cogenerada y exportada a la red'],
+  ['ELECTRICIDADCANARIAS', 'COGENERACION', 'to_nEPB', 'B', 0.070, 2.924, 'Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red'],
 
-// TODO: function cte_weighting_factors(loc, extradata=null) {}
-// TODO: función que genere lista de factores de paso según localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA)
-// TODO: y factores de paso de cogeneración, y factores para RED1 y RED2
+  ['ELECTRICIDADCEUTAMELILLA', 'RED', 'input', 'A', 0.072, 2.718, 'Recursos usados para suministrar electricidad (Ceuta y Melilla) desde la red'],
+  ['ELECTRICIDADCEUTAMELILLA', 'INSITU', 'input', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad'],
+  ['ELECTRICIDADCEUTAMELILLA', 'INSITU', 'to_grid', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a la red'],
+  ['ELECTRICIDADCEUTAMELILLA', 'INSITU', 'to_nEPB', 'A', 1.000, 0.000, 'Recursos usados para producir in situ la electricidad exportada a usos no EPB'],
+  ['ELECTRICIDADCEUTAMELILLA', 'INSITU', 'to_grid', 'B', 0.072, 2.718, 'Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad producida in situ y exportada a la red'],
+  ['ELECTRICIDADCEUTAMELILLA', 'INSITU', 'to_nEPB', 'B', 0.072, 2.718, 'Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad producida in situ y exportada a usos no EPB'],
+
+  ['ELECTRICIDADCEUTAMELILLA', 'COGENERACION', 'input', 'A', 0.000, 0.000, 'Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)'],
+  ['ELECTRICIDADCEUTAMELILLA', 'COGENERACION', 'to_grid', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)'],
+  ['ELECTRICIDADCEUTAMELILLA', 'COGENERACION', 'to_nEPB', 'A', 0.000, 2.500, 'Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)'],
+  ['ELECTRICIDADCEUTAMELILLA', 'COGENERACION', 'to_grid', 'B', 0.072, 2.718, 'Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad cogenerada y exportada a la red'],
+  ['ELECTRICIDADCEUTAMELILLA', 'COGENERACION', 'to_nEPB', 'B', 0.072, 2.718, 'Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red'],
+
+  ['MEDIOAMBIENTE', 'RED', 'input', 'A', 1.000, 0.000, 'Recursos usados para suministrar energía térmica del medioambiente (red de suministro ficticia)'],
+  ['MEDIOAMBIENTE', 'INSITU', 'input', 'A', 1.000, 0.000, 'Recursos usados para generar in situ energía térmica del medioambiente (vector renovable)'],
+  ['MEDIOAMBIENTE', 'INSITU', 'to_grid', 'A', 1.000, 0.000, 'Recursos usados para la energía térmica del medioambiente producida in situ y exportada a la red (vector sin exportación)'],
+  ['MEDIOAMBIENTE', 'INSITU', 'to_nEPB', 'A', 1.000, 0.000, 'Recursos usados para la energía térmica del medioambiente producida in situ y exportada a usos no EPB (vector sin exportación)'], // export to nEPB uses in step A
+  ['MEDIOAMBIENTE', 'INSITU', 'to_grid', 'B', 1.000, 0.000, 'Recursos ahorrados a la red (ficticia) por la energía producida in situ y exportada a la red (ficticia)'], // Savings to the grid when exporting to grid
+  ['MEDIOAMBIENTE', 'INSITU', 'to_nEPB', 'B', 1.000, 0.000, 'Recursos ahorrados a la red (ficticia) por la energía producida in situ y exportada a usos no EPB (ficticia)'], // Savings to the grid when exporting to nEPB uses
+
+  ['BIOCARBURANTE', 'RED', 'input', 'A', 1.028, 0.085, 'Recursos usados para suministrar el vector desde la red (Biocarburante = biomasa densificada (pellets))'],
+  ['BIOMASA', 'RED', 'input', 'A', 1.003, 0.034, 'Recursos usados para suministrar el vector desde la red'],
+  ['BIOMASADENSIFICADA', 'RED', 'input', 'A', 1.028, 0.085, 'Recursos usados para suministrar el vector desde la red'],
+  ['CARBON', 'RED', 'input', 'A', 0.002, 1.082, 'Recursos usados para suministrar el vector desde la red'],
+
+  ['FUELOIL', 'RED', 'input', 'A', 0.003, 1.179, 'Recursos usados para suministrar el vector desde la red (Fueloil = Gasóleo)'],
+  ['GASNATURAL', 'RED', 'input', 'A', 0.005, 1.190, 'Recursos usados para suministrar el vector desde la red'],
+  ['GASOLEO', 'RED', 'input', 'A', 0.003, 1.179, 'Recursos usados para suministrar el vector desde la red'],
+  ['GLP', 'RED', 'input', 'A', 0.030, 1.201, 'Recursos usados para suministrar el vector desde la red'],
+  ['RED1', 'RED', 'input', 'A', 0.000, 1.300, 'Recursos usados para suministrar el vector desde la red de distrito 1 (definible por el usuario)'],
+  ['RED2', 'RED', 'input', 'A', 0.000, 1.300, 'Recursos usados para suministrar el vector desde la red de distrito 2 (definible por el usuario)']
+].map(([carrier, source, dest, step, ren, nren, comment]) => new_factor(carrier, source, dest, step, ren, nren, comment));
 
 // ------------------------------------------------------------------------------------
 // Constraints
