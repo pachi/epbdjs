@@ -94,9 +94,9 @@ ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
 const CTEFP = parse_weighting_factors(
-  `vector, fuente, uso, step, ren, nren
-#valores de la propuesta del documento reconocido del IDAE de 03/02/2014, página 14
-#META FUENTEFP: CTE2013
+  `#vector, fuente, uso, step, ren, nren
+#META CTE_SRC1: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
+#META CTE_SRC2: CTE2013
 
 ELECTRICIDAD, RED, input, A, 0.341, 2.082
 
@@ -337,9 +337,9 @@ console.log("*** Lectura de cadena de factores de paso");
 {
   const metas = CTEFP.filter(e => e.type === 'META');
   const fps = CTEFP.filter(e => e.type === 'FACTOR');
-  console.log(metas[0]);
-  console.log(fps[0]);
-  if (metas.length === 1 && fps.length === 21) {
+  //console.log(metas[0]);
+  //console.log(fps[0]);
+  if (metas.length === 2 && fps.length === 21) {
     console.log(`[OK] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }`);
   } else {
     console.log(`[ERROR] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }. Esperados 1 / 21`);
