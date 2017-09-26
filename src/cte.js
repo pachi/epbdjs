@@ -148,8 +148,8 @@ export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COO
 
 // Valores por defecto para exportación (paso A) de electricidad cogenerada
 const CTE_COGEN_DEFAULTS = {
-  'to_grid': { ren: 0, nren: 2.5 },
-  'to_nEPB': { ren: 0, nren: 2.5 }
+  'to_grid': { ren: 0, nren: 2.5 }, // ELECTRICIDAD, COGENERACION, to_grid, A, ren, nren
+  'to_nEPB': { ren: 0, nren: 2.5 }  // ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren
 };
 
 // -------------------------------------------------------------------------------------
