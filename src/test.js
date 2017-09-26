@@ -29,6 +29,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 import { 
   parse_carrier_list,
   parse_weighting_factors,
+  serialize_weighting_factors,
   energy_performance,
   cte
 } from './index.js';
@@ -345,7 +346,18 @@ console.log("*** Lectura de cadena de factores de paso");
   }
 }
 
-console.log("*** Lectura de archivo .csv con metadatos");
+console.log("*** Serialización de factores de paso");
+{
+  try {
+    serialize_weighting_factors(CTEFP);
+  } catch(e) {
+    console.log("[ERROR] al serializar factores de paso");
+  } finally {
+    console.log("[OK] Serialización correcta de factores de paso");
+  }
+}
+
+console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
   const datapath = path.resolve(__dirname, 'examples',
     'cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv');

@@ -231,7 +231,25 @@ export function parse_weighting_factors(factorsstring: string): Array<TFp|TMeta>
   return [ ...metas, ...factors ];
 }
 
-// TODO: serialize_weighting_factors(fplist)
+/**
+ * Convert weighting factors list to string
+ *
+ * @export
+ * @param {any} fplist
+ * @returns {string}
+ */
+export function serialize_weighting_factors(fplist: Array<any>): string {
+  const metas = fplist
+    .filter(e => e.type === 'META')
+    .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
+  const factors = fplist
+    .filter(e => e.type === 'FACTOR' || e.type === undefined)
+    .map((cc: TFp) => {
+      const { carrier, source, dest, step, ren, nren, comment } = cc;
+      return `${ carrier }, ${ source }, ${ dest }, ${ step }, ${ ren.toFixed(3) }, ${ nren.toFixed(3) }${ comment !== '' ? ' # ' + comment : '' }`;
+    });
+  return [...metas, ...factors].join('\n');
+}
 
 // --------------------------------------------------------------------
 // Energy calculation functions
