@@ -210,9 +210,7 @@ function epfromdata(datalist, fp, kexp) {
 function epfromfile(filename, fp, kexp) {
   const datapath = path.resolve(__dirname, 'examples', filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const carrierlist = parse_carrier_list(datastring)
-    .filter(c => c.type === 'CARRIER')
-    .filter(cte.carrier_isvalid);
+  const carrierlist = cte.cte_parse_carrier_list(datastring)
   return epfromdata(carrierlist, fp, kexp);
 }
 
@@ -362,7 +360,7 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
   const datapath = path.resolve(__dirname, 'examples',
     'cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv');
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = parse_carrier_list(datastring);
+  const datalist = cte.cte_parse_carrier_list(datastring);
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
@@ -380,7 +378,7 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
 {
   const datapath = path.resolve(__dirname, 'examples', 'newServicesFormat.csv');
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = parse_carrier_list(datastring);
+  const datalist = cte.cte_parse_carrier_list(datastring);
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
