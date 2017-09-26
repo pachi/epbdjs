@@ -93,41 +93,7 @@ ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
-const CTEFP = parse_weighting_factors(
-  `#vector, fuente, uso, step, ren, nren
-#META CTE_SRC1: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
-#META CTE_SRC2: CTE2013
-
-ELECTRICIDAD, RED, input, A, 0.341, 2.082
-
-ELECTRICIDADBALEARES, RED, input, A, 0.094, 3.060
-ELECTRICIDADCANARIAS, RED, input, A, 0.059, 3.058
-ELECTRICIDADCEUTAMELILLA, RED, input, A, 0.066, 2.759
-
-ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
-ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
-ELECTRICIDAD, INSITU, to_nEPB, A, 1.0, 0.0
-ELECTRICIDAD, INSITU, to_grid, B, 0.5, 2.0
-ELECTRICIDAD, INSITU, to_nEPB, B, 0.5, 2.0
-
-GASOLEO, RED, input, A, 0.003, 1.179
-
-GLP, RED, input, A, 0.03, 1.201
-
-GASNATURAL, RED, input,A, 0.005, 1.190
-
-CARBON, RED, input, A, 0.002, 1.082
-
-BIOCARBURANTE, RED, input, A, 1.028, 0.085 #BIOMASA DENSIFICADA (PELLETS)
-
-MEDIOAMBIENTE, INSITU, input,  A, 1.0, 0.0
-MEDIOAMBIENTE, RED, input,  A, 1.0, 0.0
-
-ELECTRICIDAD, COGENERACION, input,   A, 0.0, 0.0
-ELECTRICIDAD, COGENERACION, to_grid, A, 1.0, 0.0
-ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
-ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
-ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
+const CTEFP = cte.CTEFP;
 
 // data from ejemplo3PVBdC_normativo
 const ENERGYDATALIST = [
@@ -223,7 +189,7 @@ check('1 base',
 
 check('1 base_normativo',
       epfromfile('ejemplo1base.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 34.1, nren: 208.20 } } });
+      { EP: { B: { ren: 41.4, nren: 195.4 } } });
 
 check('1 PV',
       epfromfile('ejemplo1PV.csv', TESTFP, TESTKEXP),
@@ -231,7 +197,7 @@ check('1 PV',
 
 check('1 PV_normativo',
       epfromfile('ejemplo1PV.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 67.1, nren: 104.1 } } });
+      { EP: { B: { ren: 70.7, nren: 97.7 } } });
 
 check('1 xPV',
       epfromfile('ejemplo1xPV.csv', TESTFP, TESTKEXP),
@@ -239,7 +205,7 @@ check('1 xPV',
 
 check('1 xPV_normativo',
       epfromfile('ejemplo1xPV.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 120.0, nren: -80.0 } } });
+      { EP: { B: { ren: 123.4, nren: -78.2 } } });
 
 check('1 xPVk0',
       epfromfile('ejemplo1xPV.csv', TESTFP, 0.0),
@@ -255,7 +221,7 @@ check('2 xPV gas',
 
 check('2 xPV gas_normativo',
       epfromfile('ejemplo2xPVgas.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 30.9, nren: 186.1 } } });
+      { EP: { B: { ren: 32.7, nren: 187.0 } } });
 
 check('3 PV BdC',
       epfromfile('ejemplo3PVBdC.csv', TESTFP, TESTKEXP),
@@ -263,7 +229,7 @@ check('3 PV BdC',
 
 check('3 PV BdC_normativo',
       epfromfile('ejemplo3PVBdC.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 177.5, nren: 39.6 } } });
+      { EP: { B: { ren: 178.9, nren: 37.1 } } });
 
 check('4 cgn fosil',
       epfromfile('ejemplo4cgnfosil.csv', TESTFP, TESTKEXP),
@@ -271,7 +237,7 @@ check('4 cgn fosil',
 
 check('4 cgn fosil_normativo',
       epfromfile('ejemplo4cgnfosil.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: -12.7, nren: 251 } } });
+      { EP: { B: { ren: -10.3, nren: 252.4 } } });
 
 check('5 cgn biogas',
       epfromfile('ejemplo5cgnbiogas.csv', TESTFP, TESTKEXP),
@@ -279,7 +245,7 @@ check('5 cgn biogas',
 
 check('5 cgn biogas_normativo',
       epfromfile('ejemplo5cgnbiogas.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 148.9, nren: 76.4 } } });
+      { EP: { B: { ren: 151.3, nren: 77.8 } } });
 
 check('6 K3',
       epfromfile('ejemplo6K3.csv', TESTFP, TESTKEXP),
@@ -287,7 +253,7 @@ check('6 K3',
 
 check('3 PV BdC_normativo_from_partial_data',
       epfromdata(ENERGYDATALIST, CTEFP, TESTKEXP),
-      { EP: { B: { ren: 177.5, nren: 39.6 } } });
+      { EP: { B: { ren: 178.9, nren: 37.1 } } });
 
 // -----------------------------------------------------------
 
