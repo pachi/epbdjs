@@ -152,6 +152,13 @@ const CTE_COGEN_DEFAULTS = {
   'to_nEPB': { ren: 0, nren: 2.5 }  // ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren
 };
 
+const CTE_RED_DEFAULTS = {
+  'RED1': { ren: 0, nren: 1.3 }, // RED1, RED, input, A, ren, nren
+  'RED2': { ren: 0, nren: 1.3 }  // RED2, RED, input, A, ren, nren
+}
+
+const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
+
 // -------------------------------------------------------------------------------------
 // Validation utilities and functions
 // -------------------------------------------------------------------------------------
