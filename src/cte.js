@@ -313,10 +313,12 @@ export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAU
   }
 
   // En paso A, el factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
-  outlist.push({
-    type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'input', step: 'A',
-    ren: 0.0, nren: 0.0, comment: 'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'
-  });
+  if (!outlist.find(({type, source, dest }) => type === 'FACTOR' && source === 'COGENERACION' && dest === 'input')) {
+    outlist.push({
+      type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'input', step: 'A',
+      ren: 0.0, nren: 0.0, comment: 'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'
+    });
+  }
 
   // Asegura que todos los vectores con exportación tienen factores de paso hacia la red y hacia nEPB
   [
