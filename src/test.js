@@ -191,7 +191,8 @@ function check(casename, computed, result, verbose = false) {
       outstr += `\n\n**** Balance ****\n\n${ JSON.stringify(computed, null, 4) }`;
     }
   } else {
-    outstr = `[OK] ${casename} (${computed.path})`;
+    const path = computed.path;
+    outstr = `[OK] ${casename} ${ path ? '(' + path + ')' : '' }`;
     if (verbose) {
       outstr += `\n  ${ showEP(computed.EP.A, 'A') }`
         + `\n  ${ showEP(computed.EP.B, 'B')}`;
@@ -202,8 +203,7 @@ function check(casename, computed, result, verbose = false) {
 
 // Compute primary energy (weighted energy) from datalist
 function epfromdata(datalist, fp, kexp) {
-  const balance = energy_performance(datalist, fp, kexp);
-  return { ...balance, path: 'data' };
+  return energy_performance(datalist, fp, kexp);
 }
 
 // Compute primary energy (weighted energy) from data in filename
@@ -287,7 +287,7 @@ check('6 K3',
       epfromfile('ejemplo6K3.csv', TESTFP, TESTKEXP),
       { EP: { B: { ren: 1385.5, nren: -662 } } });
 
-check('3 PV BdC_normativo_from_data',
+check('3 PV BdC_normativo_from_partial_data',
       epfromdata(ENERGYDATALIST, CTEFP, TESTKEXP),
       { EP: { B: { ren: 177.5, nren: 39.6 } } });
 
