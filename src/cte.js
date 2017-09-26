@@ -236,16 +236,18 @@ export function carrier_isvalid(carrier_obj) {
   return true;
 }
 
-// Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
-export function cte_parse_carrier_list(datastring) {
-  const carrierlist = parse_carrier_list(datastring)
-    .map(c => { // Reescribe servicios legacy
-      if (c.type === 'CARRIER' && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
-        return { ...c, service: LEGACYSERVICESMAP[c.service] }
-      } else {
-        return c;
-      }
-    })
+// Asegura vectores válidos y balance de consumos de vectores de producción in situ
+//
+// Comprueba que los vectores energéticos declarados son reconocidos
+// Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
+export function cte_fix_carrier_list(carrierdata) {
+  const carrierlist = carrierdata.map(c => { // Reescribe servicios legacy
+    if (c.type === 'CARRIER' && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
+      return { ...c, service: LEGACYSERVICESMAP[c.service] }
+    } else {
+      return c;
+    }
+  })
 
   // Vectores con valores coherentes
   const carriers = carrierlist.filter(e => e.type === 'CARRIER');
@@ -263,12 +265,20 @@ export function cte_parse_carrier_list(datastring) {
         const totproduced = veclistsum(produced.map(v => v.values));
         unbalanced = vecvecdif(unbalanced, totproduced).map(v => Math.max(0, v));
       }
-      return { type: 'CARRIER', carrier: 'MEDIOAMBIENTE', ctype: 'PRODUCCION', csubtype: 'INSITU', service,
-        values: unbalanced, comment: 'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada' };
+      return {
+        type: 'CARRIER', carrier: 'MEDIOAMBIENTE', ctype: 'PRODUCCION', csubtype: 'INSITU', service,
+        values: unbalanced, comment: 'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada'
+      };
     }).filter(v => v !== null);
-    return [... carrierlist, ...balancecarriers];
+    return [...carrierlist, ...balancecarriers];
   }
   throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(carriers.filter(c => !carrier_isvalid(c))) }`);
+}
+
+// Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
+export function cte_parse_carrier_list(datastring) {
+  const carrierdata = parse_carrier_list(datastring);
+  return cte_fix_carrier_list(carrierdata);
 }
 
 // Sanea factores de paso y genera los que falten si se pueden deducir
@@ -342,7 +352,7 @@ export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAU
         // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
         outlist.push({
           type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_grid', step: 'A',
-          ren: CTE_COGEN_DEFAULTS.to_grid.ren, nren: CTE_COGEN_DEFAULTS.to_grid.nren,
+          ren: cogen.to_grid.ren, nren: cogen.to_grid.nren,
           comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
         });
       }
@@ -355,7 +365,7 @@ export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAU
         // Valores por defecto para COGENERACION (A, to_grid|to_nEPB) - ver 9.6.6.2.3
         outlist.push({
           type: 'FACTOR', carrier: 'ELECTRICIDAD', source: 'COGENERACION', dest: 'to_nEPB', step: 'A',
-          ren: CTE_COGEN_DEFAULTS.to_nEPB.ren, nren: CTE_COGEN_DEFAULTS.to_nEPB.nren,
+          ren: cogen.to_nEPB.ren, nren: cogen.to_nEPB.nren,
           comment: 'Factor de paso predefinido (ver EN ISO 52000-1 9.6.6.2.3)'
         });
       }
