@@ -177,7 +177,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
     .map((cc: TCarrier) => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
       const valuelist = values.map(v=> v.toFixed(2)).join(',');
-      return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist } #${ comment }`;
+      return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist }${ comment !== '' ? ' # ' + comment : '' }`;
     });
   return [...metas, ...carriers].join('\n');
 }
