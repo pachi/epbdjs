@@ -139,11 +139,13 @@ const CTE_COGEN_DEFAULTS = {
   'to_nEPB': { ren: 0, nren: 2.5 }  // ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren
 };
 
+// Valores por defecto para redes de distrito
 const CTE_RED_DEFAULTS = {
   'RED1': { ren: 0, nren: 1.3 }, // RED1, RED, input, A, ren, nren
   'RED2': { ren: 0, nren: 1.3 }  // RED2, RED, input, A, ren, nren
 }
 
+// Localizaciones válidas para CTE
 const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 
 // Genera factores de paso a partir de localización
@@ -208,6 +210,8 @@ export function CteValidityException(message) {
   this.name = 'UserException';
 }
 
+// -------------------- vectores energéticos -------------------------------------------
+
 // Validate carrier data coherence
 export function carrier_isvalid(carrier_obj) {
   const { type, carrier, ctype, csubtype } = carrier_obj;
@@ -268,8 +272,9 @@ export function cte_parse_carrier_list(datastring) {
   return cte_fix_carrier_list(carrierdata);
 }
 
-// Sanea factores de paso y genera los que falten si se pueden deducir
-export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAULTS) {
+// ---------------------- Factores de paso -----------------------------------------------
+
+// Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
   const FPLIST = parse_weighting_factors(factorsstring);
   const CARRIERS = [... new Set(FPLIST.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
   let outlist = [...FPLIST];
