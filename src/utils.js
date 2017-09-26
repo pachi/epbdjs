@@ -31,6 +31,12 @@ export const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
 export const TAG_REGEX = /[A-Za-z]+[0-9]*/;
 export const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 
+// Utility functions
+
+export const new_factor = (carrier, source, dest, step, ren, nren, comment='') => ({ type: 'FACTOR', carrier, source, dest, step, ren, nren, comment });
+export const new_meta = (key, value) => ({ type: 'META', key, value });
+export const new_carrier = (carrier, ctype, csubtype, service, values, comment='') => ({ type: 'CARRIER', carrier, ctype, csubtype, service, values, comment });
+
 // Utility output functions ---------------------------------------------------
 
 // Format energy efficiency indicators as string from primary energy data
