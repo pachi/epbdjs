@@ -159,6 +159,58 @@ const CTE_RED_DEFAULTS = {
 
 const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 
+// Genera factores de paso a partir de localización
+// Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
+// factores de paso de cogeneración, y factores de paso para RED1 y RED2
+export function cte_weighting_factors(loc=CTE_LOCS[0], cogen=CTE_COGEN_DEFAULTS, red=CTE_RED_DEFAULTS) {
+  if (!CTE_LOCS.includes(loc)) {
+    throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
+  }
+  // Selecciona factores de electricidad según localización
+  const leaveout = CTE_LOCS
+    .filter(l => l !== loc)
+    .map(`ELECTRICIDAD${ (loc === 'PENINSULA') ? '' : loc }`);
+  const factors = FACTORESDEPASO.filter(f => !leaveout.includes(f.carrier));
+
+  // Factores de paso de cogeneración. Factores de exportación de electricidad cogenerada a la
+  // red o a usos nEPB: ELECTRICIDAD, COGENENRACION, to_grid | to_nEPB, A, ren, nren
+  const cogfp = factors
+    .filter(f =>
+      f.source === 'COGENERACION'
+      && f.step === 'A'
+      && ['to_grid', 'to_nEPB'].includes(f.dest)
+    );
+  if(cogfp.length > 0) {
+    const cogfpgrid = cogfp.find(f => f.dest === 'to_grid');
+    cogfpgrid.ren = cogen.to_grid.ren;
+    cogfpgrid.nren = cogen.to_grid.nren;
+    const cogfpnepb = cogfp.find(f => f.dest === 'to_nEPB');
+    cogfpnepb.ren = cogen.to_nEPB.ren;
+    cogfpnepb.nren = cogen.to_nEPB.nren;
+  } else {
+    factors.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_grid', 'A', cogen.to_grid.ren, cogen.to_grid.nren));
+    factors.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'A', cogen.to_nEPB.ren, cogen.to_nEPB.nren));
+  }
+  // Factores de redes de distrito 1 y 2: RED[1|2], RED, input, A, ren, nren
+  const redfp =  factors.filter(f => ['RED1', 'RED2'].includes(f.carrier));
+  if(redfp.length > 0) {
+    const redfp1 = redfp.find(f => f.carrier === 'RED1' && f.dest === 'input' && f.step === 'A');
+    redfp1.ren = red.RED1.ren;
+    redfp1.nren = red.RED1.nren;
+    const redfp2 = cogfp.find(f => f.carrier === 'RED2' && f.dest === 'input' && f.step === 'A');
+    redfp2.ren = red.RED2.ren;
+    redfp2.nren = red.RED2.nren;
+  } else {
+    factors.push(new_factor('RED1', 'RED', 'input', 'A', red.RED1.ren, red.RED1.nren));
+    factors.push(new_factor('RED2', 'RED', 'input', 'A', red.RED2.ren, red.RED2.nren));
+  }
+  factors.push(new_meta('CTE_LOC', loc));
+  factors.push(new_meta('CTE_SRC1', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
+  factors.push(new_meta('CTE_SRC2', 'CTE2013'));
+  return factors;
+}
+
+
 // -------------------------------------------------------------------------------------
 // Validation utilities and functions
 // -------------------------------------------------------------------------------------
