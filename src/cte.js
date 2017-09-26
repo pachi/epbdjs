@@ -214,11 +214,9 @@ export function cte_parse_carrier_list(datastring) {
 
 // Sanea factores de paso y genera los que falten si se pueden deducir
 export function cte_parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAULTS) {
-  const fplist = parse_weighting_factors(factorsstring);
-  const CARRIERS = [... new Set(fplist.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
-  const HASCOGEN = fplist.map(v => v.source).includes('COGENERACION');
-
-  let outlist = [...fplist];
+  const FPLIST = parse_weighting_factors(factorsstring);
+  const CARRIERS = [... new Set(FPLIST.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
+  let outlist = [...FPLIST];
 
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, ren, nren
   const envinsitu = outlist.find(f =>
