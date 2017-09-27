@@ -85,9 +85,6 @@ GASNATURAL, RED, input, A, 0.005, 1.190 # Recursos usados para suministrar el ve
 GASOLEO, RED, input, A, 0.003, 1.179 # Recursos usados para suministrar el vector desde la red
 GLP, RED, input, A, 0.030, 1.201 # Recursos usados para suministrar el vector desde la red
 `
-export const CTE_FP = parse_weighting_factors(CTE_FP_STR);
-export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
-
 // ------------------------ Datos para validación y por defecto ------------------------
 
 export const CTE_VALIDDATA = {
@@ -320,3 +317,6 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   red = red || CTE_RED_DEFAULTS;
   return fix_weighting_factors([ ...cte_metas, ...factors], { cogen, red });
 }
+
+export const CTE_FP = parse_weighting_factors(CTE_FP_STR);
+export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
