@@ -187,7 +187,12 @@ export function parse_carrier_list(datastring) {
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_weighting_factors(factorsdata, cogen=CTE_COGEN_DEFAULTS, red=CTE_RED_DEFAULTS) {
+export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+  // Valores por defecto
+  let { cogen, red } = options;
+  cogen = cogen || CTE_COGEN_DEFAULTS;
+  red = red || CTE_RED_DEFAULTS;
+  // Vectores existentes
   const CARRIERS = [... new Set(factorsdata.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
   let outlist = [...factorsdata];
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, 1.0, 0.0
@@ -281,15 +286,18 @@ export function fix_weighting_factors(factorsdata, cogen=CTE_COGEN_DEFAULTS, red
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_weighting_factors(factorsstring, cogen=CTE_COGEN_DEFAULTS, red=CTE_RED_DEFAULTS) {
+export function parse_weighting_factors(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   const factorsdata = epbd_parse_weighting_factors(factorsstring);
-  return fix_weighting_factors(factorsdata, cogen, red);
+  let { cogen, red } = options;
+  cogen = cogen || CTE_COGEN_DEFAULTS;
+  red = red || CTE_RED_DEFAULTS;
+  return fix_weighting_factors(factorsdata, { cogen, red });
 }
 
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_weighting_factors(loc=CTE_LOCS[0], cogen=CTE_COGEN_DEFAULTS, red=CTE_RED_DEFAULTS) {
+export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
@@ -306,6 +314,9 @@ export function new_weighting_factors(loc=CTE_LOCS[0], cogen=CTE_COGEN_DEFAULTS,
   const factors = FACTORESDEPASO
     .filter(f => !leaveout.includes(f.carrier))
     .map(f => f.type === 'FACTOR' && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
-
-  return fix_weighting_factors([ ...cte_metas, ...factors], cogen, red);
+  // Completa factores resultantes
+  let { cogen, red } = options;
+  cogen = cogen || CTE_COGEN_DEFAULTS;
+  red = red || CTE_RED_DEFAULTS;
+  return fix_weighting_factors([ ...cte_metas, ...factors], { cogen, red });
 }
