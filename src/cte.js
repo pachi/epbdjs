@@ -322,5 +322,26 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   return fix_weighting_factors([ ...cte_metas, ...factors], { cogen, red });
 }
 
+// Elimina factores de paso no usados en los datos de vectores energéticos
+//
+// Elimina los factores:
+//  - de vectores que no aparecen en los datos
+//  - de cogeneración si no hay cogeneración
+//  - para exportación a usos no EPB si no se aparecen en los datos
+//  - de electricidad in situ si no aparece una producción de ese tipo
+export function strip_weighting_factors(factorsdata, carriersdata) {
+  const CARRIERS = [... new Set(carriersdata.filter(c => c.type === 'CARRIER').map(c => c.carrier))];
+  const HASCOGEN = carriersdata.map(c => c.csubtype).includes('COGENERACION');
+  const HASNEPB =  carriersdata.map(c => c.csubtype).includes('NEPB');
+  const HASELECINSITU = (carriersdata.filter(c => c.type === 'CARRIER' && c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
+
+  const filteredfactors = factorsdata
+  .filter(f => f.type === 'META' || CARRIERS.includes(f.carrier))
+  .filter(f => f.type === 'META' || f.source !== 'COGENERACION' || HASCOGEN)
+  .filter(f => f.type === 'META' || f.dest !== 'to_nEPB' || HASNEPB)
+  .filter(f => f.type === 'META' || f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
+  return filteredfactors;
+}
+
 export const CTE_FP = parse_weighting_factors(CTE_FP_STR);
 export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
