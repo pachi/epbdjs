@@ -27,7 +27,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 
 /* eslint-disable no-console */
 import { 
-  parse_carrier_list,
+  // parse_carrier_list,
   parse_weighting_factors,
   serialize_weighting_factors,
   energy_performance,
