@@ -60,8 +60,8 @@ const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 
 // Factores de paso según documento reconocido
 export const CTE_FP_STR = `
-#META CTE_SRC1: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
-#META CTE_SRC2: CTE2013
+#META CTE_FUENTE: CTE2013
+#META CTE_COMENTARIO: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
 ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
 ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
 ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)
@@ -250,6 +250,7 @@ export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DE
         outlist.push(new_factor(fpAinput.carrier, fpAinput.source, 'to_nEPB', 'A', fpAinput.ren, fpAinput.nren,
           'Recursos usados para producir la energía exportada a usos no EPB'));
       } else {
+        // TODO: Si está definido para to_grid (no por defecto) y no para to_nEPB, qué hacemos? usamos por defecto? usamos igual a to_grid?
         // Valores por defecto para ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren - ver 9.6.6.2.3
         const is_default = (cogen.to_nEPB.ren === CTE_COGEN_DEFAULTS.to_nEPB.ren) && (cogen.to_nEPB.nren === CTE_COGEN_DEFAULTS.to_nEPB.nren);
         outlist.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'A', cogen.to_nEPB.ren, cogen.to_nEPB.nren,
@@ -298,12 +299,6 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
-  // Incluye metadatos
-  const cte_metas = [
-    new_meta('CTE_FUENTE', 'CTE2013'),
-    new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'),
-    new_meta('CTE_LOC', loc)
-  ];
   // Selecciona factores de electricidad según localización
   const leaveout = CTE_LOCS
     .filter(l => l !== loc)
@@ -311,6 +306,15 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   const factors = FACTORESDEPASO
     .filter(f => !leaveout.includes(f.carrier))
     .map(f => f.type === 'FACTOR' && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
+  // Incluye metadatos
+  const cte_metas = [];
+  if (!factors.find(f => f.type === 'META' && f.key === 'CTE_FUENTE')) {
+    cte_metas.push(new_meta('CTE_FUENTE', 'CTE2013'));
+  }
+  if (!factors.find(f => f.type === 'META' && f.key === 'CTE_COMENTARIO')) {
+    cte_metas.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
+  }
+  cte_metas.push(new_meta('CTE_LOC', loc));
   // Completa factores resultantes
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
