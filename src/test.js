@@ -180,6 +180,13 @@ function epfromfile(filename, fp, kexp) {
   return epfromdata(carrierlist, fp, kexp);
 }
 
+// Return carrier data from filename (path relative to this test file)
+function carriersfromfile(filename) {
+  const datapath = path.resolve(__dirname, filename);
+  const datastring = fs.readFileSync(datapath, 'utf-8');
+  return cte.parse_carrier_list(datastring);
+}
+
 // Tests ----------------------------------------------------------
 console.log("*** Ejemplos FprEN 15603:2014\n");
 
@@ -323,10 +330,7 @@ console.log("*** Serialización de factores de paso");
 
 console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
-  const datapath = path.resolve(__dirname, 'examples',
-    'cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv');
-  const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = cte.parse_carrier_list(datastring);
+  const datalist = carriersfromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
@@ -342,9 +346,7 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 
 console.log("*** Lectura de archivo .csv con definición de servicios");
 {
-  const datapath = path.resolve(__dirname, 'examples', 'newServicesFormat.csv');
-  const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = cte.parse_carrier_list(datastring);
+  const datalist = carriersfromfile('examples/newServicesFormat.csv');
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
@@ -356,27 +358,46 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
   }
 }
 
-console.log("*** Lectura de archivo .csv con definición de servicios");
+console.log("*** Lectura, generación y simplificación de factores de paso");
 {
   const FPFILE = path.resolve(__dirname, 'examples', 'factores_paso_20140203.csv');
-  const CARRIERSFILE = path.resolve(__dirname, 'examples', 'cte_test_carriers.csv');
   const KEXP = 0.0;
+  const carriers = carriersfromfile('examples/cte_test_carriers.csv');
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
   const fp = cte.parse_weighting_factors(fpstring);
-  //console.log("FPS corregidos: ", fp);
-
-  const datastring = fs.readFileSync(CARRIERSFILE, 'utf-8');
-  const carriers = cte.parse_carrier_list(datastring);
-  //console.log("Carriers encontrados: ", carriers);
+  if(fp) {
+    console.log("[OK] Lectura correcta de factores de paso del archivo: ", path.basename(FPFILE));
+  }
+  const fpgen = cte.new_weighting_factors('PENINSULA');
+  if(fpgen) {
+    console.log("[OK] Generación correcta de factores de paso para PENINSULA");
+  }
+  const fpstrip = cte.strip_weighting_factors(fpgen, carriers);
+  if (fpgen.length === 30 && fpstrip.length === 11) {
+    console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
+  } else {
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ fpgen.length } / ${ fpstrip.length }. Esperados 30 / 11`);
+  }
 
   const balance = energy_performance(carriers, fp, KEXP);
+  const balance1 = energy_performance(carriers, fpgen, KEXP);
+  const balance2 = energy_performance(carriers, fpstrip, KEXP);
 
-  console.log(showEP(balance.EP.B, 'B'));
-}
+  if(balance.EP.B.ren === balance1.EP.B.ren && balance.EP.B.nren === balance1.EP.B.nren) {
+    console.log("[OK] Coincide balance con factores de paso leídos y generados")
+  } else {
+    console.log("[ERROR]");
+    console.log("[ERROR] Balance con factores leídos: ", showEP(balance.EP.B, 'B'));
+    console.log("[ERROR] Balance con factores generados: ", showEP(balance1.EP.B, 'B'));
+  }
 
-console.log("*** Escritura de cadena de factores de paso");
-{
-  console.log(cte.new_weighting_factors('BALEARES'));
+  if(balance1.EP.B.ren === balance2.EP.B.ren && balance1.EP.B.nren === balance2.EP.B.nren) {
+    console.log("[OK] Coincide balance con factores de paso generados y simplificados")
+  } else {
+    console.log("[ERROR]");
+    console.log("[ERROR] Balance con factores generados: ", showEP(balance1.EP.B, 'B'));
+    console.log("[ERROR] Balance con factores simplificados: ", showEP(balance2.EP.B, 'B'));
+  }
 }
