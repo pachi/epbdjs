@@ -93,7 +93,7 @@ ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
-const CTEFP = cte.CTEFP;
+const CTEFP = cte.CTE_FP;
 
 // data from ejemplo3PVBdC_normativo
 const ENERGYDATALIST = [
@@ -176,7 +176,7 @@ function epfromdata(datalist, fp, kexp) {
 function epfromfile(filename, fp, kexp) {
   const datapath = path.resolve(__dirname, 'examples', filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const carrierlist = cte.cte_parse_carrier_list(datastring)
+  const carrierlist = cte.parse_carrier_list(datastring)
   return epfromdata(carrierlist, fp, kexp);
 }
 
@@ -303,7 +303,7 @@ console.log("*** Lectura de cadena de factores de paso");
   const fps = CTEFP.filter(e => e.type === 'FACTOR');
   //console.log(metas[0]);
   //console.log(fps[0]);
-  if (metas.length === 2 && fps.length === 21) {
+  if (metas.length === 2 && fps.length === 36) {
     console.log(`[OK] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }`);
   } else {
     console.log(`[ERROR] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }. Esperados 1 / 21`);
@@ -326,7 +326,7 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
   const datapath = path.resolve(__dirname, 'examples',
     'cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv');
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = cte.cte_parse_carrier_list(datastring);
+  const datalist = cte.parse_carrier_list(datastring);
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
@@ -344,7 +344,7 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
 {
   const datapath = path.resolve(__dirname, 'examples', 'newServicesFormat.csv');
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const datalist = cte.cte_parse_carrier_list(datastring);
+  const datalist = cte.parse_carrier_list(datastring);
   const metas = datalist.filter(e => e.type === 'META');
   const carriers = datalist
     .filter(e => e.type === 'CARRIER')
@@ -364,14 +364,19 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
-  const fp = cte.cte_parse_weighting_factors(fpstring);
+  const fp = cte.parse_weighting_factors(fpstring);
   //console.log("FPS corregidos: ", fp);
 
   const datastring = fs.readFileSync(CARRIERSFILE, 'utf-8');
-  const carriers = cte.cte_parse_carrier_list(datastring);
+  const carriers = cte.parse_carrier_list(datastring);
   //console.log("Carriers encontrados: ", carriers);
 
   const balance = energy_performance(carriers, fp, KEXP);
 
   console.log(showEP(balance.EP.B, 'B'));
+}
+
+console.log("*** Escritura de cadena de factores de paso");
+{
+  console.log(cte.new_weighting_factors('BALEARES'));
 }
