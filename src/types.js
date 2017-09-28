@@ -27,15 +27,33 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 */
 
 /* Flow types definitions */
+// Common (carriers + weighting factors)
+export type carrierType =
+  'ELECTRICIDAD' | 'ELECTRICIDADBALEARES' | 'ELECTRICIDADCANARIAS'
+  | 'ELECTRICIDADCEUTAYMELILLA' | 'MEDIOAMBIENTE' | 'BIOCARBURANTE' | 'BIOMASA'
+  | 'BIOMASADENSIFICADA' | 'CARBON' | 'FUELOIL' | 'GASNATURAL' | 'GASOLEO' | 'GLP';
+// Carriers
+export type ctypeType = 'PRODUCCION' | 'CONSUMO';
+export type pcsubtypeType = 'INSITU' | 'COGENERACION';
+export type ccsubtypeType = 'EPB' | 'NEPB';
+export type csubtypeType = pcsubtypeType | ccsubtypeType;
+export type legacyserviceType = 'WATERSYSTEMS' | 'HEATING' | 'COOLING' | 'FANS';
+export type cteserviceType = 'NODEFINIDO' | 'ACS' | 'CAL' | 'REF' | 'VEN' | 'ILU' | 'HU' | 'DHU';
+export type serviceType = legacyserviceType | cteserviceType;
+// Weighting factors
+export type sourceType = 'RED' | 'INSITU' | 'COGENERACION';
+export type destType = 'input' | 'to_grid' | 'to_nEPB';
+export type stepType = 'A' | 'B';
 
-export type TMeta = { type: "META", key: string, value: string|number };
-export type TCarrier = { type: "CARRIER",
-  carrier: string, ctype: string, csubtype: string, service: string, values: number[],
-  comment: string
-};
-export type TFp = { type: "FACTOR", carrier: string, source: string, dest: string,
-  step: string, ren: number, nren: number, comment: string
-};
+export type TCarrierMeta = { +type: 'META' | 'CARRIER' };
+export type TFactorMeta = { +type: 'META' | 'FACTOR' };
+export type TMeta = { +type: 'META', key: string, value: string|number };
+export type TCarrier = { +type: 'CARRIER',
+  carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
+  service: serviceType | legacyserviceType, values: number[],
+  comment: string };
+export type TFactor = { +type: 'FACTOR', carrier: carrierType, source: sourceType, dest: destType,
+  step: stepType, ren: number, nren: number, comment: string };
 
 export type TMCarrier = TMeta | TCarrier;
-export type TMFp = TMeta | TFp;
+export type TMFp = TMeta | TFactor;
