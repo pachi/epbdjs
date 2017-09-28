@@ -117,7 +117,7 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 // * objects with type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
+export function parse_carrier_list(datastring: string): Array<TCarrierMeta> {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
@@ -127,36 +127,38 @@ export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
     .filter(line => !line.startsWith('#'))
     .map(line => {
       const [fieldsstring, comment = ''] = line.split('#', 2).map(pp => pp.trim());
-      const fieldslist = fieldsstring.split(',').map(ff => ff.trim());
-      let [ carrier, ctype, csubtype, ...values ] = fieldslist;
+      const fieldslist: any[] = fieldsstring.split(',').map(ff => ff.trim());
+      let [ carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType, ...rest ] = fieldslist;
       if (fieldslist.length < 4) {
         throw new UserException(`Invalid number of items in: ${ fieldsstring }`);
       }
       // Find a service tag or use the generic tag instead
-      let service;
-      const maybeservice = values[0];
-      if (maybeservice.match(TAG_REGEX) || maybeservice === '') {
-        service = maybeservice === '' ? 'NODEFINIDO' : maybeservice;
-        values = values.splice(1);
+      let stringvalues = rest;
+      let maybeservice = rest[0] === '' ? 'NODEFINIDO': rest[0];
+      const maybecte = CTE_SERVICE_TAGS.find(v => v === maybeservice);
+      const matchlegacy = comment.match(LEGACY_SERVICE_TAG_REGEX);
+      const maybelegacy = matchlegacy ? LEGACY_SERVICE_TAGS.find(v => v === matchlegacy[0]) : null;
+      let service: serviceType;
+      if (maybecte) {
+        service = maybecte;
+        stringvalues = rest.splice(1);
+      } else if(maybelegacy) {
+        service = maybelegacy;
       } else {
-        const legacy_service_match = comment.match(LEGACY_SERVICE_TAG_REGEX);
-        service = legacy_service_match ? legacy_service_match[0] : 'NODEFINIDO';
+        service = 'NODEFINIDO';
       }
 
-      values = values.map(Number);
-      return { type: 'CARRIER', carrier, ctype, csubtype, service, values, comment };
+      let values: Array<number>;
+      try {
+        values = stringvalues.map(Number);
+      } catch (e) {
+        throw new UserException(`Invalid number conversion of values: ${ stringvalues.join(', ') }`);
+      }
+      return new_carrier(carrier, ctype, csubtype, service, values, comment);
     });
 
   if (components.length === 0) {
-    const EMPTYCOMPONENT = {
-      type: 'CARRIER',
-      carrier: 'ELECTRICIDAD',
-      ctype: 'CONSUMO',
-      csubtype: 'EPB',
-      service: '',
-      values: [0.0],
-      comment: ''
-    };
+    const EMPTYCOMPONENT = new_carrier('ELECTRICIDAD', 'CONSUMO', 'EPB', 'NODEFINIDO', [0.0], '');
     components.push(EMPTYCOMPONENT);
   }
 
@@ -175,8 +177,7 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
     .map(line => {
       const [key, svalue] = line.split(':', 2).map(l => l.trim());
       const value = svalue.match(FLOAT_REGEX) ? parseFloat(svalue) : svalue;
-      const metaobj: TMeta = { type: 'META', key, value };
-      return metaobj;
+      return new_meta(key, value);
     });
 
   return [ ...meta, ...components ];
@@ -190,10 +191,10 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
  * @returns {string}
  */
 export function serialize_carrier_list(carrierlist: Array<any>): string {
-  const metas = carrierlist
+  const metas: string[] = carrierlist
     .filter(e => e.type === 'META')
     .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
-  const carriers = carrierlist
+  const carriers: string[] = carrierlist
     .filter(e => e.type === 'CARRIER' || e.type === undefined)
     .map((cc: TCarrier) => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
@@ -224,7 +225,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_weighting_factors(factorsstring: string): Array<TFp|TMeta> {
+export function parse_weighting_factors(factorsstring: string): Array<TFactorMeta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
@@ -265,7 +266,7 @@ export function serialize_weighting_factors(fplist: Array<any>): string {
     .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
   const factors = fplist
     .filter(e => e.type === 'FACTOR' || e.type === undefined)
-    .map((cc: TFp) => {
+    .map((cc: TFactor) => {
       const { carrier, source, dest, step, ren, nren, comment } = cc;
       return `${ carrier }, ${ source }, ${ dest }, ${ step }, ${ ren.toFixed(3) }, ${ nren.toFixed(3) }${ comment !== '' ? ' # ' + comment : '' }`;
     });
@@ -293,7 +294,7 @@ export function serialize_weighting_factors(fplist: Array<any>): string {
 //    This follows the ISO EN 52000-1 procedure for calculation of delivered,
 //    exported and weighted energy balance.
 //
-function balance_cr(cr_i_list: TCarrier[], fp_cr: TFp[], k_exp: number) {
+function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
   // ------------ Delivered and exported energy
   const CURRENTCARRIER = cr_i_list[0].carrier;
   const numSteps = cr_i_list[0].values.length;
@@ -634,7 +635,7 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFp[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierlist: TCarrier[], fp: TFp[], k_exp: number) {
+export function energy_performance(carrierlist: TCarrier[], fp: TFactor[], k_exp: number) {
   const carrierdata = carrierlist.filter(c => c.type === 'CARRIER' || c.type === undefined);
   const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
