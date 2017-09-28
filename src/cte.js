@@ -27,10 +27,11 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 
 import { veclistsum, vecvecdif } from './vecops.js';
 import {
+  new_carrier, new_factor, new_meta,
+  LEGACY_SERVICE_TAG_REGEX,
   parse_carrier_list as epbd_parse_carrier_list,
   parse_weighting_factors as epbd_parse_weighting_factors
 } from './epbd.js';
-import { LEGACY_SERVICE_TAG_REGEX, new_carrier, new_factor, new_meta } from './utils.js';
 
 // ---------------------------------------------------------------------------------------------------------
 // Valores reglamentarios

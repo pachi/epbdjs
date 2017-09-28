@@ -41,14 +41,17 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
   - get results by use items (service), maybe using the reverse method E.3 (E.3.6, E.3.7)
 */
 
-import { FLOAT_REGEX, TAG_REGEX, LEGACY_SERVICE_TAG_REGEX } from './utils.js';
+import type {
+  carrierType, ctypeType, csubtypeType, serviceType, cteserviceType, legacyserviceType,
+  sourceType, destType, stepType,
+  TCarrierMeta, TFactorMeta,
+  TCarrier, TMeta, TFactor
+} from './types.js';
 import {
   vecsum,
   veckmul,
   veclistsum,
   vecvecsum, vecvecdif, vecvecmul, vecvecmin } from './vecops.js';
-
-import type { TCarrier, TMeta, TFp } from './types.js';
 
 // Custom exception
 function UserException(message) {
@@ -56,6 +59,24 @@ function UserException(message) {
   this.name = 'UserException';
 }
 
+// Definitions
+
+export const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
+export const TAG_REGEX = /[A-Za-z]+[0-9]*/;
+export const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
+export const LEGACY_SERVICE_TAGS: Array<legacyserviceType> = ['WATERSYSTEMS', 'HEATING', 'COOLING', 'FANS'];
+export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NODEFINIDO', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
+
+// Utility constructors
+
+export const new_meta = (key: string, value: string | number): TMeta =>
+  ({ type: 'META', key, value });
+export const new_carrier = (carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
+  service: serviceType, values: Array<number>, comment: string=''): TCarrier =>
+  ({ type: 'CARRIER', carrier, ctype, csubtype, service, values, comment });
+export const new_factor = (carrier: carrierType, source: sourceType, dest: destType, step: stepType,
+  ren: number, nren: number, comment: string=''): TFactor =>
+  ({ type: 'FACTOR', carrier, source, dest, step, ren, nren, comment });
 // -----------------------------------------------------------------------------------
 // Input/Output functions
 // -----------------------------------------------------------------------------------
