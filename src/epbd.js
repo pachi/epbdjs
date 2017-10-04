@@ -622,7 +622,7 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
     we_delivered_an: E_we_del_cr_an,
     we_exported_an_A: E_we_exp_cr_an_A,
     we_exported_nEPB_an_AB: E_we_exp_cr_used_nEPus_an_AB,
-    we_exported_grid_and_AB: E_we_exp_cr_grid_an_AB,
+    we_exported_grid_an_AB: E_we_exp_cr_grid_an_AB,
     we_exported_an_AB: E_we_exp_cr_an_AB,
     we_exported_an: E_we_exp_cr_an,
     we_an_A: E_we_cr_an_A,
