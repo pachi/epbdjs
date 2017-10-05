@@ -160,8 +160,9 @@ export function fix_carrier_list(carrierdata) {
     const envcarriers = carrierlist.filter(c => c.carrier === 'MEDIOAMBIENTE');
     const services = [... new Set(envcarriers.map(c => c.service))];
     const balancecarriers = services.map(service => {
-      const produced = envcarriers.filter(c => c.ctype === 'PRODUCCION');
-      const consumed = envcarriers.filter(c => c.ctype === 'CONSUMO');
+      const envcarriersforservice = envcarriers.filter(c => c.service === service);
+      const produced = envcarriersforservice.filter(c => c.ctype === 'PRODUCCION');
+      const consumed = envcarriersforservice.filter(c => c.ctype === 'CONSUMO');
       if (consumed.length === 0) return null;
       let unbalanced_values = veclistsum(consumed.map(v => v.values));
       if (produced.length !== 0) {
