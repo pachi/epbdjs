@@ -399,4 +399,5 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
     console.log("[ERROR] Balance con factores generados: ", showEP(balance1.EP.B, 'B'));
     console.log("[ERROR] Balance con factores simplificados: ", showEP(balance2.EP.B, 'B'));
   }
+  console.log(cte.balance_to_plain(balance));
 }

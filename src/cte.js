@@ -29,7 +29,7 @@ import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
   is_carrier, is_meta, is_factor,
-  get_carriers, get_factors,
+  get_carriers, get_metas, get_factors,
   LEGACY_SERVICE_TAG_REGEX,
   parse_carrier_list as epbd_parse_carrier_list,
   parse_weighting_factors as epbd_parse_weighting_factors
@@ -348,3 +348,98 @@ export function strip_weighting_factors(factorsdata, carriersdata) {
 
 export const CTE_FP = parse_weighting_factors(CTE_FP_STR);
 export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
+
+// Métodos de salida -------------------------------------------------------------------
+
+// Muestra balance, paso B, de forma simplificada
+export function balance_to_plain(balance, area=1.0) {
+  const { ren, nren } = balance.EP.B;
+  const { k_exp } = balance;
+  return `Area_ref = ${ area.toFixed(2) } [m2]\n`
+    + `k_exp = ${ k_exp.toFixed(2) }\n`
+    +
+   `C_ep [kWh/año]`
+    + `: ren = ${ ren.toFixed(1) }`
+    + `, nren = ${ nren.toFixed(1) }`
+    + `, tot = ${ (ren + nren).toFixed(1) }`
+    + `, RER = ${ (ren / (ren + nren)).toFixed(2) }\n`
+    +
+    `C_ep [kWh/m²·año]`
+    + `: ren = ${ (ren / area).toFixed(1) }`
+    + `, nren = ${ (nren / area).toFixed(1) }`
+    + `, tot = ${ ((ren + nren) / area).toFixed(1) }`
+    + `, RER = ${ (ren / (ren + nren)).toFixed(2) }`;
+}
+
+// Muestra balance y área de referencia en formato JSON
+export function balance_to_JSON(balance, area=1.0) {
+  return JSON.stringify({ ...balance, arearef: area }, null, '  ');
+}
+
+const escapeXML = unescaped => unescaped.replace(
+  /[<>&'"]/g,
+  m => {
+    switch (m) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
+  }
+);
+
+export function balance_to_XML(balance, area=1.0) {
+  const { carrierlist, fplist, k_exp, EP } = balance;
+  const { ren, nren } = EP.B;
+  const carriermetas = get_metas(carrierlist);
+  const carrierdata = get_carriers(carrierlist);
+  const fpmetas = get_metas(fplist);
+  const fpdata = get_factors(fplist);
+
+  const cmetastring = carriermetas.map(m =>
+    `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
+  const cdatastring = carrierdata.map(c => {
+    const { carrier, ctype, csubtype, service, values, comment } = c;
+    const vals = values.map(v => `<v>${ v.toFixed(2) }</v>`).join('');
+    return `    <vector>
+      <carrier>${ carrier }</carrier>
+      <ctype>${ ctype }</ctype>
+      <csubtype>${ csubtype }</csubtype>
+      <service>${ service }</service>
+      <values>${ vals }</values>
+      <comment>${ escapeXML(comment) }</comment>
+    </vector>`;
+  }).join('\n');
+  const fmetastring = fpmetas.map(m =>
+  `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
+  const fdatastring = fpdata.map(f => {
+    const { carrier, source, dest, step, ren, nren, comment } = f;
+    return `    <fp>
+      <carrier>${ carrier }</carrier>
+      <source>${ source }</source>
+      <dest>${ dest }</dest>
+      <step>${ step }</step>
+      <ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
+      <comment>${ escapeXML(comment) }</comment>
+    </fp>`;
+  }).join('\n');
+
+  return `<CTEEPBD>
+  <vectores>
+${ cmetastring }
+${ cdatastring }
+  </vectores>
+  <fps>
+${ fmetastring }
+${ fdatastring }
+  </fps>
+  <kexp>${ k_exp.toFixed(2) }</kexp>
+  <ep><!-- ep [kWh/m2.an] -->
+    <tot>${ ((ren + nren) / area).toFixed(1) }</tot>
+    <ren>${ (ren / area).toFixed(1) }</ren>
+    <nren>${ (nren / area).toFixed(1) }</nren>
+  </ep>
+  <arearef>${ area.toFixed(2) }</arearef><!-- área de referencia [m2] -->
+</CTEEPBD>`;
+}
