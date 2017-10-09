@@ -29,7 +29,7 @@ import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
   is_carrier, is_meta, is_factor,
-  get_carriers, get_metas, get_factors,
+  get_carriers, get_factors,
   LEGACY_SERVICE_TAG_REGEX,
   parse_carrier_list as epbd_parse_carrier_list,
   parse_weighting_factors as epbd_parse_weighting_factors
@@ -129,8 +129,8 @@ export function CteValidityException(message) {
 
 // Detecta si el vector energético es formalmente correcto
 export function carrier_isvalid(carrier_obj) {
-  const { type, carrier, ctype, csubtype } = carrier_obj;
-  if (type !== 'CARRIER') return false;
+  const { carrier, ctype, csubtype } = carrier_obj;
+  if (!is_carrier(carrier_obj)) return false;
   let validcarriers;
   try {
     validcarriers = CTE_VALIDDATA[ctype][csubtype];
@@ -221,7 +221,7 @@ export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DE
     throw new CteValidityException(`Todos los vectores deben definir los factores de paso de red: "VECTOR, INSITU, input, A, fren?, fnren?". Error en "${ missing_carriers }"`);
   }
   // En paso A, el factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
-  if (!outlist.find(({type, source, dest }) => type === 'FACTOR' && source === 'COGENERACION' && dest === 'input')) {
+  if (!outlist.find(({source, dest }) => source === 'COGENERACION' && dest === 'input')) {
     outlist.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'input', 'A', 0.0, 0.0,
       'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'));
   }
@@ -303,19 +303,18 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
-  // Selecciona factores de electricidad según localización
-  const leaveout = CTE_LOCS
-    .filter(l => l !== loc)
-    .map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
+  // Vectores ELECTRICIDAD* de otras localizaciones
+  const OTHERLOCELEC = CTE_LOCS.filter(l => l !== loc).map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
+  // Selecciona vectores ELECTRICIDAD* de la localización y renombra a ELECTRICIDAD
   const factors = FACTORESDEPASO
-    .filter(f => !leaveout.includes(f.carrier))
+    .filter(f => !OTHERLOCELEC.includes(f.carrier))
     .map(f => is_factor(f) && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
   // Incluye metadatos
   const cte_metas = [];
-  if (!factors.find(f => is_meta(f) && f.key === 'CTE_FUENTE')) {
+  if (!factors.find(f => f.key === 'CTE_FUENTE')) {
     cte_metas.push(new_meta('CTE_FUENTE', 'CTE2013'));
   }
-  if (!factors.find(f => is_meta(f) && f.key === 'CTE_COMENTARIO')) {
+  if (!factors.find(f => f.key === 'CTE_COMENTARIO')) {
     cte_metas.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
   }
   cte_metas.push(new_meta('CTE_LOC', loc));

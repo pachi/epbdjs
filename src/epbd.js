@@ -44,7 +44,6 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 import type {
   carrierType, ctypeType, csubtypeType, serviceType, cteserviceType, legacyserviceType,
   sourceType, destType, stepType,
-  TCarrierMeta, TFactorMeta,
   TCarrier, TMeta, TFactor
 } from './types.js';
 import {
@@ -70,19 +69,19 @@ export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NODEFINIDO', 'ACS', 'CA
 // Utility constructors
 
 export const new_meta = (key: string, value: string | number): TMeta =>
-  ({ type: 'META', key, value });
+  ({ key, value });
 export const new_carrier = (carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
   service: serviceType, values: Array<number>, comment: string=''): TCarrier =>
-  ({ type: 'CARRIER', carrier, ctype, csubtype, service, values, comment });
+  ({ carrier, ctype, csubtype, service, values, comment });
 export const new_factor = (carrier: carrierType, source: sourceType, dest: destType, step: stepType,
   ren: number, nren: number, comment: string=''): TFactor =>
-  ({ type: 'FACTOR', carrier, source, dest, step, ren, nren, comment });
+  ({ carrier, source, dest, step, ren, nren, comment });
 
 // Type utilities
 
-export const is_meta = (obj: any): bool => obj.type === 'META';
-export const is_carrier = (obj: any): bool => obj.type === 'CARRIER';
-export const is_factor = (obj: any): bool => obj.type === 'FACTOR';
+export const is_meta = (obj: any): bool => obj.hasOwnProperty('key');
+export const is_carrier = (obj: any): bool => obj.hasOwnProperty('values');
+export const is_factor = (obj: any): bool => obj.hasOwnProperty('step');
 export const get_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_meta);
 export const get_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
 export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter(is_factor);
@@ -106,11 +105,11 @@ export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter
 //
 // The carrier list has objects of 'CARRIER' and 'META' type
 //
-// [ { type: 'CARRIER', carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
-//   { type: 'CARRIER', carrier: carrier2, ctype: ctype2, csubtype: csubtype2, values: [...values2], comment: comment2 },
+// [ { carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
+//   { carrier: carrier2, ctype: ctype2, csubtype: csubtype2, values: [...values2], comment: comment2 },
 //   ...
-//   { type: 'META', key: key1, value: value1 },
-//   { type: 'META', key: key2, value: value2 },
+//   { key: key1, value: value1 },
+//   { key: key2, value: value2 },
 //   ...
 //   {}
 // ]
@@ -127,21 +126,21 @@ export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter
 // * objects of type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrier_list(datastring: string): Array<TCarrierMeta> {
+export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
         .filter(v => v !== null);
 
-  const components = datalines
+  const components: Array<TCarrier> = datalines
     .filter(line => !line.startsWith('#'))
     .map(line => {
       const [fieldsstring, comment = ''] = line.split('#', 2).map(pp => pp.trim());
       const fieldslist: any[] = fieldsstring.split(',').map(ff => ff.trim());
-      let [ carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType, ...rest ] = fieldslist;
       if (fieldslist.length < 4) {
         throw new UserException(`Invalid number of items in: ${ fieldsstring }`);
       }
+      let [ carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType, ...rest ] = fieldslist;
       // Find a service tag or use the generic tag instead
       let stringvalues = rest;
       let maybeservice = rest[0] === '' ? 'NODEFINIDO': rest[0];
@@ -181,7 +180,7 @@ export function parse_carrier_list(datastring: string): Array<TCarrierMeta> {
 ${ errLengths.length } lines with less than ${ numSteps } values.`);
   }
 
-  const meta = datalines
+  const meta: Array<TMeta> = datalines
     .filter(line => line.startsWith('#META') || line.startsWith('#CTE_'))
     .map(line => line.slice('#META'.length)) // strips #CTE_ too
     .map(line => {
@@ -224,36 +223,35 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
 // Metadata lines:
 //  - start with #META key: value
 //  - are stored as objects with keys in [type, key, value]:
-//    { type: META, key: string, value: string }
+//    { key: string, value: string }
 // Factor lines:
 //  - Composed of 6 comma separated fields and an optional comment
 //  - Any content after a '#' is considered a comment
 //  - are stored as objects with keys in [ type, carrier, source, dest, step, ren, nren, comment]
-//    { type: FACTOR, carrier: string, source: string, dest: string: step: string, ren: float, nren: float, comment: string }
+//    { carrier: string, source: string, dest: string: step: string, ren: float, nren: float, comment: string }
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_weighting_factors(factorsstring: string): Array<TFactorMeta> {
+export function parse_weighting_factors(factorsstring: string): Array<TFactor|TMeta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
-  const metas = contentlines.filter(l => l.startsWith('#META'))
+  const metas: Array<TMeta> = contentlines.filter(l => l.startsWith('#META'))
     .map(l => l.substr('#META'.length).split(':', 2).map(e => e.trim()))
-    .map(([key, value = '']) => ({ type: 'META', key, value }));
+    .map(([key, value = '']) => new_meta(key, value));
 
-
-  const factors = contentlines.filter(l => !l.startsWith('#'))
+  const factors: Array<TFactor> = contentlines.filter(l => !l.startsWith('#'))
     .map(l => l.split('#', 2).map(e => e.trim())) // [fields, str | undefined]
     .map(([fieldsstring, comment = '']) => {
-      const fieldslist = fieldsstring.split(',').map(e => e.trim());
+      const fieldslist: any[] = fieldsstring.split(',').map(e => e.trim());
       if (fieldslist.length !== 6) {
         throw new UserException(`WeightingFactorParsing: Wrong number of fields in ${ fieldsstring }`);
       }
-      const [ carrier, source, dest, step, sren, snren ] = fieldslist;
+      let [ carrier: carrierType, source: sourceType, dest: destType, step: stepType, sren, snren ] = fieldslist;
       try {
         const ren = parseFloat(sren);
         const nren = parseFloat(snren);
-        return { type: 'FACTOR', carrier, source, dest, step, ren, nren, comment };
+        return new_factor(carrier, source, dest, step, ren, nren, comment);
       } catch (err) {
         throw new UserException(`WeightingFactorsParsing: ren (${ sren }) or nren (${ snren }) can't be converted to float`);
       }

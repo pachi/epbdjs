@@ -47,12 +47,11 @@ export type stepType = 'A' | 'B';
 
 export type TCarrierMeta = { +type: ('META' | 'CARRIER') };
 export type TFactorMeta = { +type: ('META' | 'FACTOR') };
-export type TMeta = { +type: 'META', key: string, value: string|number };
-export type TCarrier = { +type: 'CARRIER',
-  carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
+export type TMeta = { key: string, value: string|number };
+export type TCarrier = { carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
   service: serviceType | legacyserviceType, values: number[],
   comment: string };
-export type TFactor = { +type: 'FACTOR', carrier: carrierType, source: sourceType, dest: destType,
+export type TFactor = { carrier: carrierType, source: sourceType, dest: destType,
   step: stepType, ren: number, nren: number, comment: string };
 
 export type TMCarrier = TMeta | TCarrier;
