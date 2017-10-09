@@ -639,14 +639,14 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierlist: TCarrier[], fp: TFactor[], k_exp: number) {
+export function energy_performance(carrierlist: TCarrier[], fplist: TFactor[], k_exp: number) {
   const carrierdata = get_carriers(carrierlist);
   const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
   // Compute balance
   let balance_cr_i = {};
   CARRIERS.map(carrier => {
-    const fp_cr = fp.filter(e => e.carrier === carrier);
+    const fp_cr = fplist.filter(e => e.carrier === carrier);
     const cr_i_list = carrierdata.filter(e => e.carrier === carrier);
     balance_cr_i[carrier] = balance_cr(cr_i_list, fp_cr, k_exp);
   });
@@ -674,8 +674,8 @@ export function energy_performance(carrierlist: TCarrier[], fp: TFactor[], k_exp
 
   return {
     carrierlist,
+    fplist,
     k_exp,
-    fp,
     balance_cr_i,
     EP
   };
