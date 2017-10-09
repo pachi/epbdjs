@@ -28,6 +28,8 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
+  is_carrier, is_meta, is_factor,
+  get_carriers, get_metas, get_factors,
   LEGACY_SERVICE_TAG_REGEX,
   parse_carrier_list as epbd_parse_carrier_list,
   parse_weighting_factors as epbd_parse_weighting_factors
@@ -146,14 +148,14 @@ export function carrier_isvalid(carrier_obj) {
 // Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
 export function fix_carrier_list(carrierdata) {
   const carrierlist = carrierdata.map(c => { // Reescribe servicios legacy
-    if (c.type === 'CARRIER' && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
+    if (is_carrier(c) && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
       return { ...c, service: LEGACYSERVICESMAP[c.service] }
     } else {
       return c;
     }
   })
   // Vectores con valores coherentes
-  const carriers = carrierlist.filter(e => e.type === 'CARRIER');
+  const carriers = get_carriers(carrierlist);
   const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && CTE_VALIDSERVICES.includes(c.service));
   // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
   if (all_carriers_ok) {
@@ -192,7 +194,7 @@ export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DE
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
   // Vectores existentes
-  const CARRIERS = [... new Set(factorsdata.filter(e => e.type === 'FACTOR').map(f => f.carrier))];
+  const CARRIERS = [... new Set(get_factors(factorsdata).map(f => f.carrier))];
   let outlist = [...factorsdata];
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, 1.0, 0.0
   const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
@@ -307,13 +309,13 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
     .map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
   const factors = FACTORESDEPASO
     .filter(f => !leaveout.includes(f.carrier))
-    .map(f => f.type === 'FACTOR' && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
+    .map(f => is_factor(f) && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
   // Incluye metadatos
   const cte_metas = [];
-  if (!factors.find(f => f.type === 'META' && f.key === 'CTE_FUENTE')) {
+  if (!factors.find(f => is_meta(f) && f.key === 'CTE_FUENTE')) {
     cte_metas.push(new_meta('CTE_FUENTE', 'CTE2013'));
   }
-  if (!factors.find(f => f.type === 'META' && f.key === 'CTE_COMENTARIO')) {
+  if (!factors.find(f => is_meta(f) && f.key === 'CTE_COMENTARIO')) {
     cte_metas.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
   }
   cte_metas.push(new_meta('CTE_LOC', loc));
@@ -332,16 +334,16 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
 //  - para exportación a usos no EPB si no se aparecen en los datos
 //  - de electricidad in situ si no aparece una producción de ese tipo
 export function strip_weighting_factors(factorsdata, carriersdata) {
-  const CARRIERS = [... new Set(carriersdata.filter(c => c.type === 'CARRIER').map(c => c.carrier))];
+  const CARRIERS = [... new Set(get_carriers(carriersdata).map(c => c.carrier))];
   const HASCOGEN = carriersdata.map(c => c.csubtype).includes('COGENERACION');
   const HASNEPB =  carriersdata.map(c => c.csubtype).includes('NEPB');
-  const HASELECINSITU = (carriersdata.filter(c => c.type === 'CARRIER' && c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
+  const HASELECINSITU = (carriersdata.filter(c => is_carrier(c) && c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
 
   const filteredfactors = factorsdata
-  .filter(f => f.type === 'META' || CARRIERS.includes(f.carrier))
-  .filter(f => f.type === 'META' || f.source !== 'COGENERACION' || HASCOGEN)
-  .filter(f => f.type === 'META' || f.dest !== 'to_nEPB' || HASNEPB)
-  .filter(f => f.type === 'META' || f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
+  .filter(f => is_meta(f) || CARRIERS.includes(f.carrier))
+  .filter(f => is_meta(f) || f.source !== 'COGENERACION' || HASCOGEN)
+  .filter(f => is_meta(f) || f.dest !== 'to_nEPB' || HASNEPB)
+  .filter(f => is_meta(f) || f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
   return filteredfactors;
 }
 

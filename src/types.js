@@ -45,8 +45,8 @@ export type sourceType = 'RED' | 'INSITU' | 'COGENERACION';
 export type destType = 'input' | 'to_grid' | 'to_nEPB';
 export type stepType = 'A' | 'B';
 
-export type TCarrierMeta = { +type: 'META' | 'CARRIER' };
-export type TFactorMeta = { +type: 'META' | 'FACTOR' };
+export type TCarrierMeta = { +type: ('META' | 'CARRIER') };
+export type TFactorMeta = { +type: ('META' | 'FACTOR') };
 export type TMeta = { +type: 'META', key: string, value: string|number };
 export type TCarrier = { +type: 'CARRIER',
   carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,

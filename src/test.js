@@ -31,6 +31,7 @@ import {
   parse_weighting_factors,
   serialize_weighting_factors,
   energy_performance,
+  get_carriers, get_metas, get_factors,
   cte
 } from './index.js';
 import * as fs from 'fs';
@@ -306,8 +307,8 @@ check('J9 electricity monthly kexp=1.0',
 
 console.log("*** Lectura de cadena de factores de paso");
 {
-  const metas = CTEFP.filter(e => e.type === 'META');
-  const fps = CTEFP.filter(e => e.type === 'FACTOR');
+  const metas = get_metas(CTEFP);
+  const fps = get_factors(CTEFP);
   //console.log(metas[0]);
   //console.log(fps[0]);
   if (metas.length === 2 && fps.length === 36) {
@@ -331,9 +332,8 @@ console.log("*** Serialización de factores de paso");
 console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
   const datalist = carriersfromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
-  const metas = datalist.filter(e => e.type === 'META');
-  const carriers = datalist
-    .filter(e => e.type === 'CARRIER')
+  const metas = get_metas(datalist);
+  const carriers = get_carriers(datalist)
     .filter(cte.carrier_isvalid);
   // console.log(metas2[0]);
   // console.log(carriers[0]);
@@ -347,9 +347,8 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 console.log("*** Lectura de archivo .csv con definición de servicios");
 {
   const datalist = carriersfromfile('examples/newServicesFormat.csv');
-  const metas = datalist.filter(e => e.type === 'META');
-  const carriers = datalist
-    .filter(e => e.type === 'CARRIER')
+  const metas = get_metas(datalist);
+  const carriers = get_carriers(datalist)
     .filter(cte.carrier_isvalid);
   if (metas.length === 3 && carriers.length === 4) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }`);

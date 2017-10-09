@@ -77,6 +77,16 @@ export const new_carrier = (carrier: carrierType, ctype: ctypeType, csubtype: cs
 export const new_factor = (carrier: carrierType, source: sourceType, dest: destType, step: stepType,
   ren: number, nren: number, comment: string=''): TFactor =>
   ({ type: 'FACTOR', carrier, source, dest, step, ren, nren, comment });
+
+// Type utilities
+
+export const is_meta = (obj: any): bool => obj.type === 'META';
+export const is_carrier = (obj: any): bool => obj.type === 'CARRIER';
+export const is_factor = (obj: any): bool => obj.type === 'FACTOR';
+export const get_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_meta);
+export const get_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
+export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter(is_factor);
+
 // -----------------------------------------------------------------------------------
 // Input/Output functions
 // -----------------------------------------------------------------------------------
@@ -94,7 +104,7 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 //
 // # Output format:
 //
-// The carrier list has objects with 'CARRIER' and 'META' type
+// The carrier list has objects of 'CARRIER' and 'META' type
 //
 // [ { type: 'CARRIER', carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
 //   { type: 'CARRIER', carrier: carrier2, ctype: ctype2, csubtype: csubtype2, values: [...values2], comment: comment2 },
@@ -105,7 +115,7 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 //   {}
 // ]
 //
-// * objects with type 'CARRIER' represent an energy carrier component:
+// * objects of type 'CARRIER' represent an energy carrier component:
 //   - carrier is the carrier name
 //   - ctype is either 'PRODUCCION' or 'CONSUMO' por produced or used energy
 //   - csubtype defines:
@@ -114,7 +124,7 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 //   - values is a list of energy values, one for each timestep
 //   - comment is a comment string for the carrier
 //
-// * objects with type 'META' represent metadata
+// * objects of type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
 export function parse_carrier_list(datastring: string): Array<TCarrierMeta> {
@@ -191,12 +201,10 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
  * @returns {string}
  */
 export function serialize_carrier_list(carrierlist: Array<any>): string {
-  const metas: string[] = carrierlist
-    .filter(e => e.type === 'META')
-    .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
-  const carriers: string[] = carrierlist
-    .filter(e => e.type === 'CARRIER' || e.type === undefined)
-    .map((cc: TCarrier) => {
+  const metas: string[] = get_metas(carrierlist)
+    .map(m => `#META ${ m.key }: ${ m.value }`);
+  const carriers: string[] = get_carriers(carrierlist)
+    .map(cc => {
       const { carrier, ctype, csubtype, service, values, comment } = cc;
       const valuelist = values.map(v=> v.toFixed(2)).join(',');
       return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist }${ comment !== '' ? ' # ' + comment : '' }`;
@@ -261,12 +269,10 @@ export function parse_weighting_factors(factorsstring: string): Array<TFactorMet
  * @returns {string}
  */
 export function serialize_weighting_factors(fplist: Array<any>): string {
-  const metas = fplist
-    .filter(e => e.type === 'META')
-    .map((m: TMeta) => `#META ${ m.key }: ${ m.value }`);
-  const factors = fplist
-    .filter(e => e.type === 'FACTOR' || e.type === undefined)
-    .map((cc: TFactor) => {
+  const metas = get_metas(fplist)
+    .map(m => `#META ${ m.key }: ${ m.value }`);
+  const factors = get_factors(fplist)
+    .map(cc => {
       const { carrier, source, dest, step, ren, nren, comment } = cc;
       return `${ carrier }, ${ source }, ${ dest }, ${ step }, ${ ren.toFixed(3) }, ${ nren.toFixed(3) }${ comment !== '' ? ' # ' + comment : '' }`;
     });
@@ -636,7 +642,7 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
 //
 //
 export function energy_performance(carrierlist: TCarrier[], fp: TFactor[], k_exp: number) {
-  const carrierdata = carrierlist.filter(c => c.type === 'CARRIER' || c.type === undefined);
+  const carrierdata = get_carriers(carrierlist);
   const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
 
   // Compute balance
