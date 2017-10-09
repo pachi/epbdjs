@@ -157,7 +157,7 @@ export function fix_carrier_list(carrierdata) {
   const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && CTE_VALIDSERVICES.includes(c.service));
   // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
   if (all_carriers_ok) {
-    const envcarriers = carrierlist.filter(c => c.carrier === 'MEDIOAMBIENTE');
+    const envcarriers = carriers.filter(c => c.carrier === 'MEDIOAMBIENTE');
     const services = [... new Set(envcarriers.map(c => c.service))];
     const balancecarriers = services.map(service => {
       const envcarriersforservice = envcarriers.filter(c => c.service === service);
