@@ -37,5 +37,4 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 */
 
 export * from './epbd.js';
-export * as vecops from './vecops.js';
 export * as cte from './cte.js';
