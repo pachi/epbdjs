@@ -129,12 +129,12 @@ function check(casename, computed, result, verbose = false) {
   let errA = false;
   let errB = false;
 
-  if (result.EP.hasOwnProperty('A')) {
-    errA = reserr(computed.EP.A, result.EP.A);
+  if (result.balance.hasOwnProperty('A')) {
+    errA = reserr(computed.balance.A, result.balance.A);
   }
 
-  if (result.EP.hasOwnProperty('B')) {
-    errB = reserr(computed.EP.B, result.EP.B);
+  if (result.balance.hasOwnProperty('B')) {
+    errB = reserr(computed.balance.B, result.balance.B);
   }
 
   const isError = errA || errB;
@@ -143,16 +143,16 @@ function check(casename, computed, result, verbose = false) {
   if (isError) {
     outstr = `[ERROR] ${casename} (${computed.path})`;
     if (errA) {
-      outstr += `\n  Found:    ${ showEP(computed.EP.A, 'A') }`
-        + `\n  Expected: ${ showEP(result.EP.A, 'A')}`;
+      outstr += `\n  Found:    ${ showEP(computed.balance.A, 'A') }`
+        + `\n  Expected: ${ showEP(result.balance.A, 'A')}`;
     } else if (verbose) {
-      outstr += `\n  ${ showEP(computed.EP.A, 'A') }`;
+      outstr += `\n  ${ showEP(computed.balance.A, 'A') }`;
     }
     if (errB) {
-      outstr += `\n  Found:    ${ showEP(computed.EP.B, 'B') }`
-        + `\n  Expected: ${ showEP(result.EP.B, 'B')}`;
+      outstr += `\n  Found:    ${ showEP(computed.balance.B, 'B') }`
+        + `\n  Expected: ${ showEP(result.balance.B, 'B')}`;
     } else if (verbose) {
-      outstr += `\n  ${ showEP(computed.EP.B, 'B') }`;
+      outstr += `\n  ${ showEP(computed.balance.B, 'B') }`;
     }
     if (verbose) {
       outstr += `\n\n**** Balance ****\n\n${ JSON.stringify(computed, null, 4) }`;
@@ -161,8 +161,8 @@ function check(casename, computed, result, verbose = false) {
     const path = computed.path;
     outstr = `[OK] ${casename} ${ path ? '(' + path + ')' : '' }`;
     if (verbose) {
-      outstr += `\n  ${ showEP(computed.EP.A, 'A') }`
-        + `\n  ${ showEP(computed.EP.B, 'B')}`;
+      outstr += `\n  ${ showEP(computed.balance.A, 'A') }`
+        + `\n  ${ showEP(computed.balance.B, 'B')}`;
     }
   }
   console.log(outstr);
@@ -193,75 +193,75 @@ console.log("*** Ejemplos FprEN 15603:2014\n");
 
 check('1 base',
       epfromfile('ejemplo1base.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 50.0, nren: 200.0 } } });
+      { balance: { B: { ren: 50.0, nren: 200.0 } } });
 
 check('1 base_normativo',
       epfromfile('ejemplo1base.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 41.4, nren: 195.4 } } });
+      { balance: { B: { ren: 41.4, nren: 195.4 } } });
 
 check('1 PV',
       epfromfile('ejemplo1PV.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 75.0, nren: 100.0 } } });
+      { balance: { B: { ren: 75.0, nren: 100.0 } } });
 
 check('1 PV_normativo',
       epfromfile('ejemplo1PV.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 70.7, nren: 97.7 } } });
+      { balance: { B: { ren: 70.7, nren: 97.7 } } });
 
 check('1 xPV',
       epfromfile('ejemplo1xPV.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 120.0, nren: -80.0 } } });
+      { balance: { B: { ren: 120.0, nren: -80.0 } } });
 
 check('1 xPV_normativo',
       epfromfile('ejemplo1xPV.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 123.4, nren: -78.2 } } });
+      { balance: { B: { ren: 123.4, nren: -78.2 } } });
 
 check('1 xPVk0',
       epfromfile('ejemplo1xPV.csv', TESTFP, 0.0),
-      { EP: { B: { ren: 100.0, nren: 0.0 } } });
+      { balance: { B: { ren: 100.0, nren: 0.0 } } });
 
 check('1 xPVk0_normativo',
       epfromfile('ejemplo1xPV.csv', CTEFP, 0.0),
-      { EP: { B: { ren: 100.0, nren: 0.0 } } });
+      { balance: { B: { ren: 100.0, nren: 0.0 } } });
 
 check('2 xPV gas',
       epfromfile('ejemplo2xPVgas.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 30.0, nren: 169.0 } } });
+      { balance: { B: { ren: 30.0, nren: 169.0 } } });
 
 check('2 xPV gas_normativo',
       epfromfile('ejemplo2xPVgas.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 32.7, nren: 187.0 } } });
+      { balance: { B: { ren: 32.7, nren: 187.0 } } });
 
 check('3 PV BdC',
       epfromfile('ejemplo3PVBdC.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 180.0, nren: 38.0 } } });
+      { balance: { B: { ren: 180.0, nren: 38.0 } } });
 
 check('3 PV BdC_normativo',
       epfromfile('ejemplo3PVBdC.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 178.9, nren: 37.1 } } });
+      { balance: { B: { ren: 178.9, nren: 37.1 } } });
 
 check('4 cgn fosil',
       epfromfile('ejemplo4cgnfosil.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: -14.0, nren: 227.0 } } });
+      { balance: { B: { ren: -14.0, nren: 227.0 } } });
 
 check('4 cgn fosil_normativo',
       epfromfile('ejemplo4cgnfosil.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: -10.3, nren: 252.4 } } });
+      { balance: { B: { ren: -10.3, nren: 252.4 } } });
 
 check('5 cgn biogas',
       epfromfile('ejemplo5cgnbiogas.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 159.0, nren: 69.0 } } });
+      { balance: { B: { ren: 159.0, nren: 69.0 } } });
 
 check('5 cgn biogas_normativo',
       epfromfile('ejemplo5cgnbiogas.csv', CTEFP, TESTKEXP),
-      { EP: { B: { ren: 151.3, nren: 77.8 } } });
+      { balance: { B: { ren: 151.3, nren: 77.8 } } });
 
 check('6 K3',
       epfromfile('ejemplo6K3.csv', TESTFP, TESTKEXP),
-      { EP: { B: { ren: 1385.5, nren: -662 } } });
+      { balance: { B: { ren: 1385.5, nren: -662 } } });
 
 check('3 PV BdC_normativo_from_partial_data',
       epfromdata(ENERGYDATALIST, CTEFP, TESTKEXP),
-      { EP: { B: { ren: 178.9, nren: 37.1 } } });
+      { balance: { B: { ren: 178.9, nren: 37.1 } } });
 
 // -----------------------------------------------------------
 
@@ -269,39 +269,39 @@ console.log("*** Ejemplos ISO/TR 52000-2:2016\n");
 
 check('J1 Base kexp=1.0',
       epfromfile('ejemploJ1_base.csv', TESTFPJ, TESTKEXP),
-      { EP: { B: { ren: 50.0, nren: 200.0 }, A: { ren: 50, nren: 200 } } });
+      { balance: { B: { ren: 50.0, nren: 200.0 }, A: { ren: 50, nren: 200 } } });
 
 check('J2 Base + PV kexp=1.0',
       epfromfile('ejemploJ2_basePV.csv', TESTFPJ, TESTKEXP),
-      { EP: { B: { ren: 75.0, nren: 100.0 }, A: { ren: 75, nren: 100 } } });
+      { balance: { B: { ren: 75.0, nren: 100.0 }, A: { ren: 75, nren: 100 } } });
 
 check('J3 Base + PV excess kexp=1.0',
       epfromfile('ejemploJ3_basePVexcess.csv', TESTFPJ, TESTKEXP),
-      { EP: { B: { ren: 120, nren: -80.0 }, A: { ren: 100, nren: 0 } } });
+      { balance: { B: { ren: 120, nren: -80.0 }, A: { ren: 100, nren: 0 } } });
 
 check('J4 Base + PV excess kexp=0.0',
       epfromfile('ejemploJ3_basePVexcess.csv', TESTFPJ, 0.0),
-      { EP: { B: { ren: 100, nren: 0.0 }, A: { ren: 100, nren: 0 } } });
+      { balance: { B: { ren: 100, nren: 0.0 }, A: { ren: 100, nren: 0 } } });
 
 check('J5 Gas boiler + PV for auxiliaries kexp=1.0',
       epfromfile('ejemploJ5_gasPV.csv', TESTFPJ, TESTKEXP),
-      { EP: { B: { ren: 30, nren: 169 }, A: { ren: 20, nren: 209 } } });
+      { balance: { B: { ren: 30, nren: 169 }, A: { ren: 20, nren: 209 } } });
 
 check('J6 Heat pump + PV kexp=1.0',
       epfromfile('ejemploJ6_HPPV.csv', TESTFPJ, TESTKEXP),
-      { EP: { B: { ren: 181, nren: 38 }, A: { ren: 181, nren: 38 } } });
+      { balance: { B: { ren: 181, nren: 38 }, A: { ren: 181, nren: 38 } } });
 
 check('J7 Co-generator (gas) + Gas boiler kexp=1.0',
       epfromfile('ejemploJ7_cogenfuelgasboiler.csv', TESTFPJ7, TESTKEXP),
-      { EP: { B: { ren: -14, nren: 229 }, A: { ren: 0, nren: 215 } } });
+      { balance: { B: { ren: -14, nren: 229 }, A: { ren: 0, nren: 215 } } });
 
 check('J8 Co-generator (biogas) + Gas boiler kexp=1.0',
       epfromfile('ejemploJ8_cogenbiogasboiler.csv', TESTFPJ8, TESTKEXP),
-      { EP: { B: { ren: 144, nren: 71 }, A: { ren: 96, nren: 120 } } });
+      { balance: { B: { ren: 144, nren: 71 }, A: { ren: 96, nren: 120 } } });
 
 check('J9 electricity monthly kexp=1.0',
       epfromfile('ejemploJ9_electr.csv', TESTFPJ9, TESTKEXP),
-      { EP: { B: { ren: 1386.0, nren: -662.0 }, A: { ren: 1010, nren: 842 } } }, true);
+      { balance: { B: { ren: 1386.0, nren: -662.0 }, A: { ren: 1010, nren: 842 } } }, true);
 
 // ---------------------------------------------------------------
 
@@ -380,24 +380,24 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
     console.log(`[ERROR] Encontrados (META/CARRIER) ${ fpgen.length } / ${ fpstrip.length }. Esperados 30 / 11`);
   }
 
-  const balance = energy_performance(carriers, fp, KEXP);
-  const balance1 = energy_performance(carriers, fpgen, KEXP);
-  const balance2 = energy_performance(carriers, fpstrip, KEXP);
+  const res = energy_performance(carriers, fp, KEXP);
+  const res1 = energy_performance(carriers, fpgen, KEXP);
+  const res2 = energy_performance(carriers, fpstrip, KEXP);
 
-  if(balance.EP.B.ren === balance1.EP.B.ren && balance.EP.B.nren === balance1.EP.B.nren) {
+  if(res.balance.B.ren === res1.balance.B.ren && res.balance.B.nren === res1.balance.B.nren) {
     console.log("[OK] Coincide balance con factores de paso leídos y generados")
   } else {
     console.log("[ERROR]");
-    console.log("[ERROR] Balance con factores leídos: ", showEP(balance.EP.B, 'B'));
-    console.log("[ERROR] Balance con factores generados: ", showEP(balance1.EP.B, 'B'));
+    console.log("[ERROR] Balance con factores leídos: ", showEP(res.balance.B, 'B'));
+    console.log("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
   }
 
-  if(balance1.EP.B.ren === balance2.EP.B.ren && balance1.EP.B.nren === balance2.EP.B.nren) {
+  if(res1.balance.B.ren === res2.balance.B.ren && res1.balance.B.nren === res2.balance.B.nren) {
     console.log("[OK] Coincide balance con factores de paso generados y simplificados")
   } else {
     console.log("[ERROR]");
-    console.log("[ERROR] Balance con factores generados: ", showEP(balance1.EP.B, 'B'));
-    console.log("[ERROR] Balance con factores simplificados: ", showEP(balance2.EP.B, 'B'));
+    console.log("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
+    console.log("[ERROR] Balance con factores simplificados: ", showEP(res2.balance.B, 'B'));
   }
-  console.log(cte.balance_to_plain(balance));
+  console.log(cte.balance_to_plain(res));
 }

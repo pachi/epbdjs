@@ -352,9 +352,9 @@ export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 // Métodos de salida -------------------------------------------------------------------
 
 // Muestra balance, paso B, de forma simplificada
-export function balance_to_plain(balance, area=1.0) {
-  const { ren, nren } = balance.EP.B;
-  const { k_exp } = balance;
+export function balance_to_plain(balanceobj, area=1.0) {
+  const { ren, nren } = balanceobj.balance.B;
+  const { k_exp } = balanceobj;
   return `Area_ref = ${ area.toFixed(2) } [m2]\n`
     + `k_exp = ${ k_exp.toFixed(2) }\n`
     +
@@ -372,8 +372,8 @@ export function balance_to_plain(balance, area=1.0) {
 }
 
 // Muestra balance y área de referencia en formato JSON
-export function balance_to_JSON(balance, area=1.0) {
-  return JSON.stringify({ ...balance, arearef: area }, null, '  ');
+export function balance_to_JSON(balanceobj, area=1.0) {
+  return JSON.stringify({ ...balanceobj, arearef: area }, null, '  ');
 }
 
 const escapeXML = unescaped => unescaped.replace(
@@ -389,9 +389,9 @@ const escapeXML = unescaped => unescaped.replace(
   }
 );
 
-export function balance_to_XML(balance, area=1.0) {
-  const { carrierlist, fplist, k_exp, EP } = balance;
-  const { ren, nren } = EP.B;
+export function balance_to_XML(balanceobj, area=1.0) {
+  const { carrierlist, fplist, k_exp, balance } = balanceobj;
+  const { ren, nren } = balance.B;
   const carriermetas = get_metas(carrierlist);
   const carrierdata = get_carriers(carrierlist);
   const fpmetas = get_metas(fplist);

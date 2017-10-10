@@ -651,7 +651,7 @@ export function energy_performance(carrierlist: TCarrier[], fplist: TFactor[], k
     balance_cr_i[carrier] = balance_cr(cr_i_list, fp_cr, k_exp);
   });
 
-  const EP = Object.keys(balance_cr_i)
+  const balance = Object.keys(balance_cr_i)
     .reduce(
       (acc, cr) => ({
         // E_we_an =  E_we_del_an - E_we_exp_an; // formula 2 step A
@@ -677,6 +677,6 @@ export function energy_performance(carrierlist: TCarrier[], fplist: TFactor[], k
     fplist,
     k_exp,
     balance_cr_i,
-    EP
+    balance
   };
 }
