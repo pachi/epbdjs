@@ -28,16 +28,16 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 // Utility output functions ---------------------------------------------------
 
 // Format energy efficiency indicators as string from primary energy data
-export function ep2string(EP, area = 1.0) {
+export function ep2string(balanceobj, area = 1.0) {
   const areafactor = 1.0 / area;
 
-  const eparen = areafactor * EP.EP.A.ren;
-  const epanren = areafactor * EP.EP.A.nren;
+  const eparen = areafactor * balanceobj.balance.A.ren;
+  const epanren = areafactor * balanceobj.balance.A.nren;
   const epatotal = eparen + epanren;
   const eparer = epatotal ? eparen / epatotal : 0.0;
 
-  const epren = areafactor * EP.EP.B.ren;
-  const epnren = areafactor * EP.EP.B.nren;
+  const epren = areafactor * balanceobj.balance.B.ren;
+  const epnren = areafactor * balanceobj.balance.B.nren;
   const eptotal = epren + epnren;
   const eprer = eptotal ? epren / eptotal : 0.0;
 
@@ -48,14 +48,14 @@ export function ep2string(EP, area = 1.0) {
 }
 
 // Convert EP object to epdict
-export function ep2dict(EP, area = 1.0) {
+export function ep2dict(balanceobj, area = 1.0) {
   const areafactor = 1.0 / area;
-  const EPAren = areafactor * EP.EP.A.ren;
-  const EPAnren = areafactor * EP.EP.A.nren;
+  const EPAren = areafactor * balanceobj.balance.A.ren;
+  const EPAnren = areafactor * balanceobj.balance.A.nren;
   const EPAtotal = EPAren + EPAnren;
   const EPArer = (EPAtotal === 0) ? 0 : EPAren / EPAtotal;
-  const EPren = areafactor * EP.EP.B.ren;
-  const EPnren = areafactor * EP.EP.B.nren;
+  const EPren = areafactor * balanceobj.balance.B.ren;
+  const EPnren = areafactor * balanceobj.balance.B.nren;
   const EPtotal = EPren + EPnren;
   const EPrer = (EPtotal === 0) ? 0 : EPren / EPtotal;
   return { EPAren, EPAnren, EPAtotal, EPArer, EPren, EPnren, EPtotal, EPrer };
