@@ -86,6 +86,18 @@ export const get_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_
 export const get_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
 export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter(is_factor);
 
+// Serialize basic types to string
+export const meta2string = (mm: TMeta): string => `#META ${ mm.key }: ${ mm.value }`;
+export function carrier2string(cc: TCarrier): string {
+  const { carrier, ctype, csubtype, service, values, comment } = cc;
+  const valuelist = values.map(v=> v.toFixed(2)).join(',');
+  return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist }${ comment !== '' ? ' # ' + comment : '' }`;
+}
+export function fp2string(ff: TFactor): string {
+  const { carrier, source, dest, step, ren, nren, comment } = ff;
+  return `${ carrier }, ${ source }, ${ dest }, ${ step }, ${ ren.toFixed(3) }, ${ nren.toFixed(3) }${ comment !== '' ? ' # ' + comment : '' }`;
+}
+
 // -----------------------------------------------------------------------------------
 // Input/Output functions
 // -----------------------------------------------------------------------------------
