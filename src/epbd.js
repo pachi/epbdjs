@@ -105,7 +105,7 @@ export function fp2string(ff: TFactor): string {
 // Input parsing functions -----------------------------------------------------------
 
 
-// Read energy input data from string and return a carrier data object { components,  meta }
+// Read energy input data from string and return a carrier list with meta and carrier data
 //
 // # Input format:
 //
@@ -115,7 +115,7 @@ export function fp2string(ff: TFactor): string {
 //
 // # Output format:
 //
-// The carrier list has objects of 'CARRIER' and 'META' type
+// The carrier list has objects of 'CARRIER' and 'META' types
 //
 // [ { carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
 //   { carrier: carrier2, ctype: ctype2, csubtype: csubtype2, values: [...values2], comment: comment2 },
@@ -204,13 +204,7 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
   return [ ...meta, ...components ];
 }
 
-/**
- * Convert energy data as carrierlist to string
- *
- * @export
- * @param {any} carrierlist
- * @returns {string}
- */
+// Convert energy data as carrierlist to string
 export function serialize_carrier_list(carrierlist: Array<any>): string {
   const metas: string[] = get_metas(carrierlist)
     .map(m => `#META ${ m.key }: ${ m.value }`);
@@ -271,13 +265,7 @@ export function parse_weighting_factors(factorsstring: string): Array<TFactor|TM
   return [ ...metas, ...factors ];
 }
 
-/**
- * Convert weighting factors list to string
- *
- * @export
- * @param {any} fplist
- * @returns {string}
- */
+// Convert weighting factors list to string
 export function serialize_weighting_factors(fplist: Array<any>): string {
   const metas = get_metas(fplist)
     .map(m => `#META ${ m.key }: ${ m.value }`);
