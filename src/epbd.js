@@ -67,7 +67,6 @@ export const LEGACY_SERVICE_TAGS: Array<legacyserviceType> = ['WATERSYSTEMS', 'H
 export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NODEFINIDO', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
 
 // Utility constructors
-
 export const new_meta = (key: string, value: string | number): TMeta =>
   ({ key, value });
 export const new_carrier = (carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
@@ -78,7 +77,6 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
   ({ carrier, source, dest, step, ren, nren, comment });
 
 // Type utilities
-
 export const is_meta = (obj: any): bool => obj.hasOwnProperty('key');
 export const is_carrier = (obj: any): bool => obj.hasOwnProperty('values');
 export const is_factor = (obj: any): bool => obj.hasOwnProperty('step');
@@ -206,14 +204,8 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
 
 // Convert energy data as carrierlist to string
 export function serialize_carrier_list(carrierlist: Array<any>): string {
-  const metas: string[] = get_metas(carrierlist)
-    .map(m => `#META ${ m.key }: ${ m.value }`);
-  const carriers: string[] = get_carriers(carrierlist)
-    .map(cc => {
-      const { carrier, ctype, csubtype, service, values, comment } = cc;
-      const valuelist = values.map(v=> v.toFixed(2)).join(',');
-      return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist }${ comment !== '' ? ' # ' + comment : '' }`;
-    });
+  const metas: string[] = get_metas(carrierlist).map(meta2string);
+  const carriers: string[] = get_carriers(carrierlist).map(carrier2string);
   return [...metas, ...carriers].join('\n');
 }
 
@@ -238,7 +230,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_weighting_factors(factorsstring: string): Array<TFactor|TMeta> {
+export function parse_wfactors(factorsstring: string): Array<TFactor|TMeta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
@@ -266,14 +258,9 @@ export function parse_weighting_factors(factorsstring: string): Array<TFactor|TM
 }
 
 // Convert weighting factors list to string
-export function serialize_weighting_factors(fplist: Array<any>): string {
-  const metas = get_metas(fplist)
-    .map(m => `#META ${ m.key }: ${ m.value }`);
-  const factors = get_factors(fplist)
-    .map(cc => {
-      const { carrier, source, dest, step, ren, nren, comment } = cc;
-      return `${ carrier }, ${ source }, ${ dest }, ${ step }, ${ ren.toFixed(3) }, ${ nren.toFixed(3) }${ comment !== '' ? ' # ' + comment : '' }`;
-    });
+export function serialize_wfactors(fplist: Array<any>): string {
+  const metas = get_metas(fplist).map(meta2string);
+  const factors = get_factors(fplist).map(fp2string);
   return [...metas, ...factors].join('\n');
 }
 

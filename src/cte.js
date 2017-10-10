@@ -32,7 +32,7 @@ import {
   get_carriers, get_metas, get_factors,
   LEGACY_SERVICE_TAG_REGEX,
   parse_carrier_list as epbd_parse_carrier_list,
-  parse_weighting_factors as epbd_parse_weighting_factors
+  parse_wfactors as epbd_parse_wfactors
 } from './epbd.js';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ export function parse_carrier_list(datastring) {
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function fix_wfactors(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   // Valores por defecto
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
@@ -288,18 +288,18 @@ export function fix_weighting_factors(factorsdata, options={ cogen: CTE_COGEN_DE
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_weighting_factors(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
-  const factorsdata = epbd_parse_weighting_factors(factorsstring);
+export function parse_wfactors(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+  const factorsdata = epbd_parse_wfactors(factorsstring);
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_weighting_factors(factorsdata, { cogen, red });
+  return fix_wfactors(factorsdata, { cogen, red });
 }
 
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function new_wfactors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
@@ -322,7 +322,7 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_weighting_factors([ ...cte_metas, ...factors], { cogen, red });
+  return fix_wfactors([ ...cte_metas, ...factors], { cogen, red });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
@@ -332,7 +332,7 @@ export function new_weighting_factors(loc=CTE_LOCS[0], options={ cogen: CTE_COGE
 //  - de cogeneración si no hay cogeneración
 //  - para exportación a usos no EPB si no se aparecen en los datos
 //  - de electricidad in situ si no aparece una producción de ese tipo
-export function strip_weighting_factors(factorsdata, carriersdata) {
+export function strip_wfactors(factorsdata, carriersdata) {
   const CARRIERS = [... new Set(get_carriers(carriersdata).map(c => c.carrier))];
   const HASCOGEN = carriersdata.map(c => c.csubtype).includes('COGENERACION');
   const HASNEPB =  carriersdata.map(c => c.csubtype).includes('NEPB');
@@ -346,7 +346,7 @@ export function strip_weighting_factors(factorsdata, carriersdata) {
   return filteredfactors;
 }
 
-export const CTE_FP = parse_weighting_factors(CTE_FP_STR);
+export const CTE_FP = parse_wfactors(CTE_FP_STR);
 export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 
 // Métodos de salida -------------------------------------------------------------------

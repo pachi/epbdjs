@@ -28,8 +28,8 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 /* eslint-disable no-console */
 import { 
   // parse_carrier_list,
-  parse_weighting_factors,
-  serialize_weighting_factors,
+  parse_wfactors,
+  serialize_wfactors,
   energy_performance,
   get_carriers, get_metas, get_factors,
   cte
@@ -37,7 +37,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
-const TESTFPJ = parse_weighting_factors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -48,14 +48,14 @@ MEDIOAMBIENTE, INSITU, input,  A, 1.0, 0.0
 MEDIOAMBIENTE, RED, input,  A, 1.0, 0.0
 `);
 
-const TESTFPJ7 = parse_weighting_factors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ7 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 0.0, 2.5
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ8 = parse_weighting_factors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ8 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 BIOCARBURANTE, RED, input, A, 1.0, 0.1
@@ -63,7 +63,7 @@ ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 2.27, 0.23
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ9 = parse_weighting_factors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ9 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -71,7 +71,7 @@ ELECTRICIDAD, INSITU, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, INSITU, to_nEPB, B, 0.5, 2.0`);
 
-const TESTFP = parse_weighting_factors(`vector, fuente, uso, step, ren, nren
+const TESTFP = parse_wfactors(`vector, fuente, uso, step, ren, nren
 
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 
@@ -321,7 +321,7 @@ console.log("*** Lectura de cadena de factores de paso");
 console.log("*** Serialización de factores de paso");
 {
   try {
-    serialize_weighting_factors(CTEFP);
+    serialize_wfactors(CTEFP);
   } catch(e) {
     console.log("[ERROR] al serializar factores de paso");
   } finally {
@@ -365,15 +365,15 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
-  const fp = cte.parse_weighting_factors(fpstring);
+  const fp = cte.parse_wfactors(fpstring);
   if(fp) {
     console.log("[OK] Lectura correcta de factores de paso del archivo: ", path.basename(FPFILE));
   }
-  const fpgen = cte.new_weighting_factors('PENINSULA');
+  const fpgen = cte.new_wfactors('PENINSULA');
   if(fpgen) {
     console.log("[OK] Generación correcta de factores de paso para PENINSULA");
   }
-  const fpstrip = cte.strip_weighting_factors(fpgen, carriers);
+  const fpstrip = cte.strip_wfactors(fpgen, carriers);
   if (fpgen.length === 30 && fpstrip.length === 11) {
     console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
   } else {
