@@ -80,9 +80,9 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 export const is_meta = (obj: any): bool => obj.hasOwnProperty('key');
 export const is_carrier = (obj: any): bool => obj.hasOwnProperty('values');
 export const is_factor = (obj: any): bool => obj.hasOwnProperty('step');
-export const get_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_meta);
-export const get_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
-export const get_factors = (cmlist: Array<any>): Array<TFactor> => cmlist.filter(is_factor);
+export const filter_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_meta);
+export const filter_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
+export const filter_factors = (fmlist: Array<any>): Array<TFactor> => fmlist.filter(is_factor);
 
 // Serialize basic types to string
 export const meta2string = (mm: TMeta): string => `#META ${ mm.key }: ${ mm.value }`;
@@ -136,7 +136,7 @@ export function fp2string(ff: TFactor): string {
 // * objects of type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrier_list(datastring: string): Array<TCarrier|TMeta> {
+export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
@@ -202,11 +202,11 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
   return [ ...meta, ...components ];
 }
 
-// Convert energy data as carrierlist to string
-export function serialize_carrier_list(carrierlist: Array<any>): string {
-  const metas: string[] = get_metas(carrierlist).map(meta2string);
-  const carriers: string[] = get_carriers(carrierlist).map(carrier2string);
-  return [...metas, ...carriers].join('\n');
+// Convert carrier data (carrier list with metadata) to string
+export function serialize_carrierdata(carrierdata: Array<TMeta|TCarrier>): string {
+  const cmetas = filter_metas(carrierdata).map(meta2string);
+  const carriers = filter_carriers(carrierdata).map(carrier2string);
+  return [...cmetas, ...carriers].join('\n');
 }
 
 // Read energy weighting factors data from string
@@ -230,7 +230,7 @@ export function serialize_carrier_list(carrierlist: Array<any>): string {
 //
 // Returns: list of objects representing metadata and factor data.
 //
-export function parse_wfactors(factorsstring: string): Array<TFactor|TMeta> {
+export function parse_wfactordata(factorsstring: string): Array<TFactor|TMeta> {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
@@ -258,10 +258,10 @@ export function parse_wfactors(factorsstring: string): Array<TFactor|TMeta> {
 }
 
 // Convert weighting factors list to string
-export function serialize_wfactors(fplist: Array<any>): string {
-  const metas = get_metas(fplist).map(meta2string);
-  const factors = get_factors(fplist).map(fp2string);
-  return [...metas, ...factors].join('\n');
+export function serialize_wfactordata(fplist: Array<any>): string {
+  const fmetas = filter_metas(fplist).map(meta2string);
+  const factors = filter_factors(fplist).map(fp2string);
+  return [...fmetas, ...factors].join('\n');
 }
 
 // --------------------------------------------------------------------
@@ -626,16 +626,17 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierlist: TCarrier[], fplist: TFactor[], k_exp: number) {
-  const carrierdata = get_carriers(carrierlist);
-  const CARRIERS = [... new Set(carrierdata.map(e => e.carrier))];
+export function energy_performance(carrierdata: Array<TMeta|TCarrier>, fpdata: Array<TMeta|TFactor>, k_exp: number) {
+  const carriers = filter_carriers(carrierdata);
+  const fps = filter_factors(fpdata);
+  const CARRIERLIST = [... new Set(carriers.map(e => e.carrier))];
 
   // Compute balance
   let balance_cr_i = {};
-  CARRIERS.map(carrier => {
-    const fp_cr = fplist.filter(e => e.carrier === carrier);
-    const cr_i_list = carrierdata.filter(e => e.carrier === carrier);
-    balance_cr_i[carrier] = balance_cr(cr_i_list, fp_cr, k_exp);
+  CARRIERLIST.map(carrier => {
+    const cr_i = carriers.filter(e => e.carrier === carrier);
+    const fp_cr = fps.filter(e => e.carrier === carrier);
+    balance_cr_i[carrier] = balance_cr(cr_i, fp_cr, k_exp);
   });
 
   const balance = Object.keys(balance_cr_i)
@@ -660,8 +661,8 @@ export function energy_performance(carrierlist: TCarrier[], fplist: TFactor[], k
     );
 
   return {
-    carrierlist,
-    fplist,
+    carrierdata,
+    fpdata,
     k_exp,
     balance_cr_i,
     balance

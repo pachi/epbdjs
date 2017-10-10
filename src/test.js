@@ -27,17 +27,16 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 
 /* eslint-disable no-console */
 import { 
-  // parse_carrier_list,
-  parse_wfactors,
-  serialize_wfactors,
+  parse_wfactordata,
+  serialize_wfactordata,
   energy_performance,
-  get_carriers, get_metas, get_factors,
+  filter_carriers, filter_metas, filter_factors,
   cte
 } from './index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const TESTFPJ = parse_wfactors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ = parse_wfactordata(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -48,14 +47,14 @@ MEDIOAMBIENTE, INSITU, input,  A, 1.0, 0.0
 MEDIOAMBIENTE, RED, input,  A, 1.0, 0.0
 `);
 
-const TESTFPJ7 = parse_wfactors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ7 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 0.0, 2.5
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ8 = parse_wfactors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ8 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 BIOCARBURANTE, RED, input, A, 1.0, 0.1
@@ -63,7 +62,7 @@ ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 2.27, 0.23
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ9 = parse_wfactors(`vector, fuente, uso, step, ren, nren
+const TESTFPJ9 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -71,7 +70,7 @@ ELECTRICIDAD, INSITU, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, INSITU, to_nEPB, B, 0.5, 2.0`);
 
-const TESTFP = parse_wfactors(`vector, fuente, uso, step, ren, nren
+const TESTFP = parse_wfactordata(`vector, fuente, uso, step, ren, nren
 
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 
@@ -169,23 +168,23 @@ function check(casename, computed, result, verbose = false) {
 }
 
 // Compute primary energy (weighted energy) from datalist
-function epfromdata(datalist, fp, kexp) {
-  return energy_performance(datalist, fp, kexp);
+function epfromdata(carrierdata, fpdata, kexp) {
+  return energy_performance(carrierdata, fpdata, kexp);
 }
 
 // Compute primary energy (weighted energy) from data in filename
-function epfromfile(filename, fp, kexp) {
+function epfromfile(filename, fpdata, kexp) {
   const datapath = path.resolve(__dirname, 'examples', filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const carrierlist = cte.parse_carrier_list(datastring)
-  return epfromdata(carrierlist, fp, kexp);
+  const carrierdata = cte.parse_carrierdata(datastring)
+  return epfromdata(carrierdata, fpdata, kexp);
 }
 
 // Return carrier data from filename (path relative to this test file)
-function carriersfromfile(filename) {
+function carrierdatafromfile(filename) {
   const datapath = path.resolve(__dirname, filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  return cte.parse_carrier_list(datastring);
+  return cte.parse_carrierdata(datastring);
 }
 
 // Tests ----------------------------------------------------------
@@ -307,21 +306,21 @@ check('J9 electricity monthly kexp=1.0',
 
 console.log("*** Lectura de cadena de factores de paso");
 {
-  const metas = get_metas(CTEFP);
-  const fps = get_factors(CTEFP);
+  const fmetas = filter_metas(CTEFP);
+  const fps = filter_factors(CTEFP);
   //console.log(metas[0]);
   //console.log(fps[0]);
-  if (metas.length === 2 && fps.length === 36) {
-    console.log(`[OK] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }`);
+  if (fmetas.length === 2 && fps.length === 36) {
+    console.log(`[OK] Encontrados (META/FACTOR) ${ fmetas.length } / ${ fps.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/FACTOR) ${ metas.length } / ${ fps.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/FACTOR) ${ fmetas.length } / ${ fps.length }. Esperados 1 / 21`);
   }
 }
 
 console.log("*** Serialización de factores de paso");
 {
   try {
-    serialize_wfactors(CTEFP);
+    serialize_wfactordata(CTEFP);
   } catch(e) {
     console.log("[ERROR] al serializar factores de paso");
   } finally {
@@ -331,29 +330,29 @@ console.log("*** Serialización de factores de paso");
 
 console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
-  const datalist = carriersfromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
-  const metas = get_metas(datalist);
-  const carriers = get_carriers(datalist)
+  const datalist = carrierdatafromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
+  const cmetas = filter_metas(datalist);
+  const carriers = filter_carriers(datalist)
     .filter(cte.carrier_isvalid);
   // console.log(metas2[0]);
   // console.log(carriers[0]);
-  if (metas.length === 70 && carriers.length === 4) {
-    console.log(`[OK] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }`);
+  if (cmetas.length === 70 && carriers.length === 4) {
+    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }. Esperados 1 / 21`);
   }
 }
 
 console.log("*** Lectura de archivo .csv con definición de servicios");
 {
-  const datalist = carriersfromfile('examples/newServicesFormat.csv');
-  const metas = get_metas(datalist);
-  const carriers = get_carriers(datalist)
+  const datalist = carrierdatafromfile('examples/newServicesFormat.csv');
+  const cmetas = filter_metas(datalist);
+  const carriers = filter_carriers(datalist)
     .filter(cte.carrier_isvalid);
-  if (metas.length === 3 && carriers.length === 4) {
-    console.log(`[OK] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }`);
+  if (cmetas.length === 3 && carriers.length === 4) {
+    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ metas.length } / ${ carriers.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }. Esperados 1 / 21`);
   }
 }
 
@@ -361,19 +360,19 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
 {
   const FPFILE = path.resolve(__dirname, 'examples', 'factores_paso_20140203.csv');
   const KEXP = 0.0;
-  const carriers = carriersfromfile('examples/cte_test_carriers.csv');
+  const carriers = carrierdatafromfile('examples/cte_test_carriers.csv');
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
-  const fp = cte.parse_wfactors(fpstring);
+  const fp = cte.parse_wfactordata(fpstring);
   if(fp) {
     console.log("[OK] Lectura correcta de factores de paso del archivo: ", path.basename(FPFILE));
   }
-  const fpgen = cte.new_wfactors('PENINSULA');
+  const fpgen = cte.new_wfactordata('PENINSULA');
   if(fpgen) {
     console.log("[OK] Generación correcta de factores de paso para PENINSULA");
   }
-  const fpstrip = cte.strip_wfactors(fpgen, carriers);
+  const fpstrip = cte.strip_wfactordata(fpgen, carriers);
   if (fpgen.length === 30 && fpstrip.length === 11) {
     console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
   } else {

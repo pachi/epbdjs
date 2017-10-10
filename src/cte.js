@@ -29,10 +29,10 @@ import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
   is_carrier, is_meta, is_factor,
-  get_carriers, get_metas, get_factors,
+  filter_carriers, filter_metas, filter_factors,
   LEGACY_SERVICE_TAG_REGEX,
-  parse_carrier_list as epbd_parse_carrier_list,
-  parse_wfactors as epbd_parse_wfactors
+  parse_carrierdata as epbd_parse_carrierdata,
+  parse_wfactordata as epbd_parse_wfactordata
 } from './epbd.js';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -146,8 +146,8 @@ export function carrier_isvalid(carrier_obj) {
 //
 // Comprueba que los vectores energéticos declarados son reconocidos
 // Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
-export function fix_carrier_list(carrierdata) {
-  const carrierlist = carrierdata.map(c => { // Reescribe servicios legacy
+export function fix_carrierdata(carrierdata) {
+  const fixedcarrierdata = carrierdata.map(c => { // Reescribe servicios legacy
     if (is_carrier(c) && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
       return { ...c, service: LEGACYSERVICESMAP[c.service] }
     } else {
@@ -155,7 +155,7 @@ export function fix_carrier_list(carrierdata) {
     }
   })
   // Vectores con valores coherentes
-  const carriers = get_carriers(carrierlist);
+  const carriers = filter_carriers(fixedcarrierdata);
   const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && CTE_VALIDSERVICES.includes(c.service));
   // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
   if (all_carriers_ok) {
@@ -174,27 +174,27 @@ export function fix_carrier_list(carrierdata) {
       return new_carrier('MEDIOAMBIENTE', 'PRODUCCION', 'INSITU', service, unbalanced_values,
         'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada');
     }).filter(v => v !== null);
-    return [...carrierlist, ...balancecarriers];
+    return [...fixedcarrierdata, ...balancecarriers];
   }
   throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(carriers.filter(c => !carrier_isvalid(c))) }`);
 }
 
 // Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
-export function parse_carrier_list(datastring) {
-  const carrierdata = epbd_parse_carrier_list(datastring);
-  return fix_carrier_list(carrierdata);
+export function parse_carrierdata(datastring) {
+  const carrierdata = epbd_parse_carrierdata(datastring);
+  return fix_carrierdata(carrierdata);
 }
 
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_wfactors(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function fix_wfactordata(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   // Valores por defecto
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
   // Vectores existentes
-  const CARRIERS = [... new Set(get_factors(factorsdata).map(f => f.carrier))];
+  const CARRIERS = [... new Set(filter_factors(factorsdata).map(f => f.carrier))];
   let outlist = [...factorsdata];
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, 1.0, 0.0
   const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
@@ -288,18 +288,18 @@ export function fix_wfactors(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, r
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_wfactors(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
-  const factorsdata = epbd_parse_wfactors(factorsstring);
+export function parse_wfactordata(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+  const factorsdata = epbd_parse_wfactordata(factorsstring);
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactors(factorsdata, { cogen, red });
+  return fix_wfactordata(factorsdata, { cogen, red });
 }
 
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_wfactors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function new_wfactordata(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
@@ -322,7 +322,7 @@ export function new_wfactors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULT
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactors([ ...cte_metas, ...factors], { cogen, red });
+  return fix_wfactordata([ ...cte_metas, ...factors], { cogen, red });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
@@ -332,8 +332,8 @@ export function new_wfactors(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULT
 //  - de cogeneración si no hay cogeneración
 //  - para exportación a usos no EPB si no se aparecen en los datos
 //  - de electricidad in situ si no aparece una producción de ese tipo
-export function strip_wfactors(factorsdata, carriersdata) {
-  const CARRIERS = [... new Set(get_carriers(carriersdata).map(c => c.carrier))];
+export function strip_wfactordata(factorsdata, carriersdata) {
+  const CARRIERS = [... new Set(filter_carriers(carriersdata).map(c => c.carrier))];
   const HASCOGEN = carriersdata.map(c => c.csubtype).includes('COGENERACION');
   const HASNEPB =  carriersdata.map(c => c.csubtype).includes('NEPB');
   const HASELECINSITU = (carriersdata.filter(c => is_carrier(c) && c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
@@ -346,7 +346,7 @@ export function strip_wfactors(factorsdata, carriersdata) {
   return filteredfactors;
 }
 
-export const CTE_FP = parse_wfactors(CTE_FP_STR);
+export const CTE_FP = parse_wfactordata(CTE_FP_STR);
 export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 
 // Métodos de salida -------------------------------------------------------------------
@@ -390,16 +390,16 @@ const escapeXML = unescaped => unescaped.replace(
 );
 
 export function balance_to_XML(balanceobj, area=1.0) {
-  const { carrierlist, fplist, k_exp, balance } = balanceobj;
+  const { carrierdata, fpdata, k_exp, balance } = balanceobj;
   const { ren, nren } = balance.B;
-  const carriermetas = get_metas(carrierlist);
-  const carrierdata = get_carriers(carrierlist);
-  const fpmetas = get_metas(fplist);
-  const fpdata = get_factors(fplist);
+  const cmetas = filter_metas(carrierdata);
+  const carriers = filter_carriers(carrierdata);
+  const fmetas = filter_metas(fpdata);
+  const fps = filter_factors(fpdata);
 
-  const cmetastring = carriermetas.map(m =>
+  const cmetastring = cmetas.map(m =>
     `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
-  const cdatastring = carrierdata.map(c => {
+  const cdatastring = carriers.map(c => {
     const { carrier, ctype, csubtype, service, values, comment } = c;
     const vals = values.map(v => `<v>${ v.toFixed(2) }</v>`).join('');
     return `    <vector>
@@ -411,9 +411,9 @@ export function balance_to_XML(balanceobj, area=1.0) {
       <comment>${ escapeXML(comment) }</comment>
     </vector>`;
   }).join('\n');
-  const fmetastring = fpmetas.map(m =>
+  const fmetastring = fmetas.map(m =>
   `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
-  const fdatastring = fpdata.map(f => {
+  const fdatastring = fps.map(f => {
     const { carrier, source, dest, step, ren, nren, comment } = f;
     return `    <fp>
       <carrier>${ carrier }</carrier>
