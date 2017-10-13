@@ -358,13 +358,13 @@ export function balance_to_plain(balanceobj, area=1.0) {
   return `Area_ref = ${ area.toFixed(2) } [m2]\n`
     + `k_exp = ${ k_exp.toFixed(2) }\n`
     +
-   `C_ep [kWh/año]`
+   `C_ep [kWh/an]`
     + `: ren = ${ ren.toFixed(1) }`
     + `, nren = ${ nren.toFixed(1) }`
     + `, tot = ${ (ren + nren).toFixed(1) }`
     + `, RER = ${ (ren / (ren + nren)).toFixed(2) }\n`
     +
-    `C_ep [kWh/m²·año]`
+    `C_ep [kWh/m2.an]`
     + `: ren = ${ (ren / area).toFixed(1) }`
     + `, nren = ${ (nren / area).toFixed(1) }`
     + `, tot = ${ ((ren + nren) / area).toFixed(1) }`
