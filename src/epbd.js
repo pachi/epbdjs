@@ -64,7 +64,7 @@ export const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
 export const TAG_REGEX = /[A-Za-z]+[0-9]*/;
 export const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
 export const LEGACY_SERVICE_TAGS: Array<legacyserviceType> = ['WATERSYSTEMS', 'HEATING', 'COOLING', 'FANS'];
-export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NODEFINIDO', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
+export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NDEF', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
 
 // Utility constructors
 export const new_meta = (key: string, value: string | number): TMeta =>
@@ -153,7 +153,7 @@ export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
       let [ carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType, ...rest ] = fieldslist;
       // Find a service tag or use the generic tag instead
       let stringvalues = rest;
-      let maybeservice = rest[0] === '' ? 'NODEFINIDO': rest[0];
+      let maybeservice = rest[0] === '' ? 'NDEF': rest[0];
       const maybecte = CTE_SERVICE_TAGS.find(v => v === maybeservice);
       const matchlegacy = comment.match(LEGACY_SERVICE_TAG_REGEX);
       const maybelegacy = matchlegacy ? LEGACY_SERVICE_TAGS.find(v => v === matchlegacy[0]) : null;
@@ -164,7 +164,7 @@ export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
       } else if(maybelegacy) {
         service = maybelegacy;
       } else {
-        service = 'NODEFINIDO';
+        service = 'NDEF';
       }
 
       let values: Array<number>;
@@ -177,7 +177,7 @@ export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
     });
 
   if (components.length === 0) {
-    const EMPTYCOMPONENT = new_carrier('ELECTRICIDAD', 'CONSUMO', 'EPB', 'NODEFINIDO', [0.0], '');
+    const EMPTYCOMPONENT = new_carrier('ELECTRICIDAD', 'CONSUMO', 'EPB', 'NDEF', [0.0], '');
     components.push(EMPTYCOMPONENT);
   }
 

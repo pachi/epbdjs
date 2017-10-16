@@ -112,7 +112,7 @@ export const CTE_VALIDDATA = {
   }
 };
 
-export const CTE_VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NODEFINIDO' ];
+export const CTE_VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NDEF' ];
 export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
 
 // -------------------------------------------------------------------------------------

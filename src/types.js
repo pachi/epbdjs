@@ -38,7 +38,7 @@ export type pcsubtypeType = 'INSITU' | 'COGENERACION';
 export type ccsubtypeType = 'EPB' | 'NEPB';
 export type csubtypeType = pcsubtypeType | ccsubtypeType;
 export type legacyserviceType = 'WATERSYSTEMS' | 'HEATING' | 'COOLING' | 'FANS';
-export type cteserviceType = 'NODEFINIDO' | 'ACS' | 'CAL' | 'REF' | 'VEN' | 'ILU' | 'HU' | 'DHU';
+export type cteserviceType = 'NDEF' | 'ACS' | 'CAL' | 'REF' | 'VEN' | 'ILU' | 'HU' | 'DHU';
 export type serviceType = legacyserviceType | cteserviceType;
 // Weighting factors
 export type sourceType = 'RED' | 'INSITU' | 'COGENERACION';
