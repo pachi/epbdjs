@@ -1,4 +1,4 @@
-#META CTE_SRC1: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
+#META CTE_SRC1: Factores de paso del documento reconocido del IDAE de 20/07/2014
 #META CTE_SRC2: CTE2013
 ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
 ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
