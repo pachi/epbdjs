@@ -64,7 +64,7 @@ const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 // Factores de paso según documento reconocido
 export const CTE_FP_STR = `
 #META CTE_FUENTE: CTE2013
-#META CTE_COMENTARIO: Factores de paso del documento reconocido del IDAE de 03/02/2014, página 14
+#META CTE_COMENTARIO: Factores de paso del documento reconocido del RITE de 20/07/2014
 ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
 ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
 ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)
