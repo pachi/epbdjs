@@ -30,7 +30,6 @@ import {
   parse_wfactordata,
   serialize_wfactordata,
   energy_performance,
-  filter_carriers, filter_metas, filter_factors,
   cte
 } from './index.js';
 import * as fs from 'fs';
@@ -96,7 +95,7 @@ ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 const CTEFP = cte.CTE_FP;
 
 // data from ejemplo3PVBdC_normativo
-const ENERGYDATALIST = [
+const ENERGYDATALIST = { cmeta: [], cdata: [
   { values: [9.67, 7.74, 4.84, 4.35, 2.42, 2.9, 3.87, 3.39, 2.42, 3.87, 5.8, 7.74],
     carrier: 'ELECTRICIDAD', ctype: 'CONSUMO', csubtype: 'EPB' },
   { values: [1.13, 1.42, 1.99, 2.84, 4.82, 5.39, 5.67, 5.11, 4.54, 3.40, 2.27, 1.42],
@@ -105,7 +104,7 @@ const ENERGYDATALIST = [
     carrier: 'MEDIOAMBIENTE', ctype: 'CONSUMO', csubtype: 'EPB' },
   { values: [21.48, 17.18, 10.74, 9.66, 5.37, 6.44, 8.59, 7.52, 5.37, 8.59, 12.89, 17.18],
     carrier: 'MEDIOAMBIENTE', ctype: 'PRODUCCION', csubtype: 'INSITU' }
-];
+] };
 
 const TESTKEXP = 1.0;
 
@@ -306,14 +305,14 @@ check('J9 electricity monthly kexp=1.0',
 
 console.log("*** Lectura de cadena de factores de paso");
 {
-  const fmetas = filter_metas(CTEFP);
-  const fps = filter_factors(CTEFP);
+  const wmeta = CTEFP.wmeta;
+  const wdata = CTEFP.wdata;
   //console.log(metas[0]);
   //console.log(fps[0]);
-  if (fmetas.length === 2 && fps.length === 36) {
-    console.log(`[OK] Encontrados (META/FACTOR) ${ fmetas.length } / ${ fps.length }`);
+  if (wmeta.length === 2 && wdata.length === 36) {
+    console.log(`[OK] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/FACTOR) ${ fmetas.length } / ${ fps.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }. Esperados 1 / 21`);
   }
 }
 
@@ -330,29 +329,28 @@ console.log("*** Serialización de factores de paso");
 
 console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
-  const datalist = carrierdatafromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
-  const cmetas = filter_metas(datalist);
-  const carriers = filter_carriers(datalist)
+  const components = carrierdatafromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
+  const cmetas = components.cmeta;
+  const cdata = components.cdata
     .filter(cte.carrier_isvalid);
-  // console.log(metas2[0]);
-  // console.log(carriers[0]);
-  if (cmetas.length === 70 && carriers.length === 4) {
-    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }`);
+
+  if (cmetas.length === 70 && cdata.length === 4) {
+    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados 1 / 21`);
   }
 }
 
 console.log("*** Lectura de archivo .csv con definición de servicios");
 {
-  const datalist = carrierdatafromfile('examples/newServicesFormat.csv');
-  const cmetas = filter_metas(datalist);
-  const carriers = filter_carriers(datalist)
+  const components = carrierdatafromfile('examples/newServicesFormat.csv');
+  const cmetas = components.cmeta;
+  const cdata = components.cdata
     .filter(cte.carrier_isvalid);
-  if (cmetas.length === 3 && carriers.length === 4) {
-    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }`);
+  if (cmetas.length === 3 && cdata.length === 4) {
+    console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ carriers.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados 1 / 21`);
   }
 }
 
@@ -360,7 +358,7 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
 {
   const FPFILE = path.resolve(__dirname, 'examples', 'factores_paso_20140203.csv');
   const KEXP = 0.0;
-  const carriers = carrierdatafromfile('examples/cte_test_carriers.csv');
+  const components = carrierdatafromfile('examples/cte_test_carriers.csv');
 
   // Read weighting factors
   const fpstring = fs.readFileSync(FPFILE, 'utf-8');
@@ -372,16 +370,16 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
   if(fpgen) {
     console.log("[OK] Generación correcta de factores de paso para PENINSULA");
   }
-  const fpstrip = cte.strip_wfactordata(fpgen, carriers);
+  const fpstrip = cte.strip_wfactordata(fpgen, components);
   if (fpgen.length === 30 && fpstrip.length === 11) {
     console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
   } else {
     console.log(`[ERROR] Encontrados (META/CARRIER) ${ fpgen.length } / ${ fpstrip.length }. Esperados 30 / 11`);
   }
 
-  const res = energy_performance(carriers, fp, KEXP);
-  const res1 = energy_performance(carriers, fpgen, KEXP);
-  const res2 = energy_performance(carriers, fpstrip, KEXP);
+  const res = energy_performance(components, fp, KEXP);
+  const res1 = energy_performance(components, fpgen, KEXP);
+  const res2 = energy_performance(components, fpstrip, KEXP);
 
   if(res.balance.B.ren === res1.balance.B.ren && res.balance.B.nren === res1.balance.B.nren) {
     console.log("[OK] Coincide balance con factores de paso leídos y generados")

@@ -29,7 +29,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 // -----------------------------------------------------------------------------------
 // Vector utilities
 // -----------------------------------------------------------------------------------
-export const zip = (...rows: any[]) => [...rows[0]].map((_, c) => rows.map(row => row[c]));
+export const zip = (...rows: any[]): any[] => [...rows[0]].map((_, c) => rows.map(row => row[c]));
 
 // Elementwise sum res[i] = vec1[i] + vec2[i] + ... + vecj[i]
 export function veclistsum(veclist: (number[])[]): number[] {

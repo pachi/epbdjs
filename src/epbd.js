@@ -44,8 +44,9 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 import type {
   carrierType, ctypeType, csubtypeType, serviceType, cteserviceType, legacyserviceType,
   sourceType, destType, stepType,
-  TCarrier, TMeta, TFactor
+  TCarrier, TMeta, TFactor, TComponents, TFactors
 } from './types.js';
+
 import {
   vecsum,
   veckmul,
@@ -76,14 +77,6 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
   ren: number, nren: number, comment: string=''): TFactor =>
   ({ carrier, source, dest, step, ren, nren, comment });
 
-// Type utilities
-export const is_meta = (obj: any): bool => obj.hasOwnProperty('key');
-export const is_carrier = (obj: any): bool => obj.hasOwnProperty('values');
-export const is_factor = (obj: any): bool => obj.hasOwnProperty('step');
-export const filter_metas = (cmlist: Array<any>): Array<TMeta> => cmlist.filter(is_meta);
-export const filter_carriers = (cmlist: Array<any>): Array<TCarrier> => cmlist.filter(is_carrier);
-export const filter_factors = (fmlist: Array<any>): Array<TFactor> => fmlist.filter(is_factor);
-
 // Serialize basic types to string
 export const meta2string = (mm: TMeta): string => `#META ${ mm.key }: ${ mm.value }`;
 export function carrier2string(cc: TCarrier): string {
@@ -103,7 +96,7 @@ export function fp2string(ff: TFactor): string {
 // Input parsing functions -----------------------------------------------------------
 
 
-// Read energy input data from string and return a carrier list with meta and carrier data
+// Read energy input data from string and return a component object with meta and carrier data
 //
 // # Input format:
 //
@@ -113,16 +106,19 @@ export function fp2string(ff: TFactor): string {
 //
 // # Output format:
 //
-// The carrier list has objects of 'CARRIER' and 'META' types
+// The component has properties data and meta with lists of objects of 'CARRIER' and 'META' types
 //
-// [ { carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
+// { cdata: [
+//   { carrier: carrier1, ctype: ctype1, csubtype: csubtype1, values: [...values1], comment: comment1 },
 //   { carrier: carrier2, ctype: ctype2, csubtype: csubtype2, values: [...values2], comment: comment2 },
 //   ...
+//   ],
+//  cmeta: [
 //   { key: key1, value: value1 },
 //   { key: key2, value: value2 },
 //   ...
-//   {}
-// ]
+//   ]
+// }
 //
 // * objects of type 'CARRIER' represent an energy carrier component:
 //   - carrier is the carrier name
@@ -136,13 +132,13 @@ export function fp2string(ff: TFactor): string {
 // * objects of type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
+export function parse_carrierdata(datastring: string): TComponents {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
         .filter(v => v !== null);
 
-  const components: Array<TCarrier> = datalines
+  const cdata: Array<TCarrier> = datalines
     .filter(line => !line.startsWith('#'))
     .map(line => {
       const [fieldsstring, comment = ''] = line.split('#', 2).map(pp => pp.trim());
@@ -176,12 +172,12 @@ export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
       return new_carrier(carrier, ctype, csubtype, service, values, comment);
     });
 
-  if (components.length === 0) {
+  if (cdata.length === 0) {
     const EMPTYCOMPONENT = new_carrier('ELECTRICIDAD', 'CONSUMO', 'EPB', 'NDEF', [0.0], '');
-    components.push(EMPTYCOMPONENT);
+    cdata.push(EMPTYCOMPONENT);
   }
 
-  const lengths = components.map(datum => datum.values.length);
+  const lengths = cdata.map(datum => datum.values.length);
   const numSteps = Math.max(...lengths);
   const errLengths = lengths.filter(v => v < numSteps);
 
@@ -190,7 +186,7 @@ export function parse_carrierdata(datastring: string): Array<TCarrier|TMeta> {
 ${ errLengths.length } lines with less than ${ numSteps } values.`);
   }
 
-  const meta: Array<TMeta> = datalines
+  const cmeta: Array<TMeta> = datalines
     .filter(line => line.startsWith('#META') || line.startsWith('#CTE_'))
     .map(line => line.slice('#META'.length)) // strips #CTE_ too
     .map(line => {
@@ -199,13 +195,13 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
       return new_meta(key, value);
     });
 
-  return [ ...meta, ...components ];
+  return { cmeta, cdata };
 }
 
-// Convert carrier data (carrier list with metadata) to string
-export function serialize_carrierdata(carrierdata: Array<TMeta|TCarrier>): string {
-  const cmetas = filter_metas(carrierdata).map(meta2string);
-  const carriers = filter_carriers(carrierdata).map(carrier2string);
+// Convert components (carrier data with metadata) to string
+export function serialize_carrierdata(components: TComponents): string {
+  const cmetas = components.cmeta.map(meta2string);
+  const carriers = components.cdata.map(carrier2string);
   return [...cmetas, ...carriers].join('\n');
 }
 
@@ -228,17 +224,17 @@ export function serialize_carrierdata(carrierdata: Array<TMeta|TCarrier>): strin
 //  - are stored as objects with keys in [ type, carrier, source, dest, step, ren, nren, comment]
 //    { carrier: string, source: string, dest: string: step: string, ren: float, nren: float, comment: string }
 //
-// Returns: list of objects representing metadata and factor data.
+// Returns: Weighting factors object with lists of metadata (meta) and weighting factor objects (data).
 //
-export function parse_wfactordata(factorsstring: string): Array<TFactor|TMeta> {
+export function parse_wfactordata(factorsstring: string): TFactors {
   const contentlines = factorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
-  const metas: Array<TMeta> = contentlines.filter(l => l.startsWith('#META'))
+  const wmeta: Array<TMeta> = contentlines.filter(l => l.startsWith('#META'))
     .map(l => l.substr('#META'.length).split(':', 2).map(e => e.trim()))
     .map(([key, value = '']) => new_meta(key, value));
 
-  const factors: Array<TFactor> = contentlines.filter(l => !l.startsWith('#'))
+  const wdata: Array<TFactor> = contentlines.filter(l => !l.startsWith('#'))
     .map(l => l.split('#', 2).map(e => e.trim())) // [fields, str | undefined]
     .map(([fieldsstring, comment = '']) => {
       const fieldslist: any[] = fieldsstring.split(',').map(e => e.trim());
@@ -254,14 +250,14 @@ export function parse_wfactordata(factorsstring: string): Array<TFactor|TMeta> {
         throw new UserException(`WeightingFactorsParsing: ren (${ sren }) or nren (${ snren }) can't be converted to float`);
       }
     });
-  return [ ...metas, ...factors ];
+  return { wmeta, wdata };
 }
 
-// Convert weighting factors list to string
-export function serialize_wfactordata(fplist: Array<any>): string {
-  const fmetas = filter_metas(fplist).map(meta2string);
-  const factors = filter_factors(fplist).map(fp2string);
-  return [...fmetas, ...factors].join('\n');
+// Convert weighting factors object to string
+export function serialize_wfactordata(factors: TFactors): string {
+  const fmetas = factors.wmeta.map(meta2string);
+  const fdata = factors.wdata.map(fp2string);
+  return [...fmetas, ...fdata].join('\n');
 }
 
 // --------------------------------------------------------------------
@@ -626,9 +622,9 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(carrierdata: Array<TMeta|TCarrier>, fpdata: Array<TMeta|TFactor>, k_exp: number) {
-  const carriers = filter_carriers(carrierdata);
-  const fps = filter_factors(fpdata);
+export function energy_performance(components: TComponents, factors: TFactors, k_exp: number) {
+  const carriers = components.cdata;
+  const fps = factors.wdata;
   const CARRIERLIST = [... new Set(carriers.map(e => e.carrier))];
 
   // Compute balance
@@ -661,8 +657,8 @@ export function energy_performance(carrierdata: Array<TMeta|TCarrier>, fpdata: A
     );
 
   return {
-    carrierdata,
-    fpdata,
+    components,
+    factors,
     k_exp,
     balance_cr_i,
     balance

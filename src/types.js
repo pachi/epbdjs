@@ -32,7 +32,7 @@ export type carrierType =
   'ELECTRICIDAD' | 'ELECTRICIDADBALEARES' | 'ELECTRICIDADCANARIAS'
   | 'ELECTRICIDADCEUTAYMELILLA' | 'MEDIOAMBIENTE' | 'BIOCARBURANTE' | 'BIOMASA'
   | 'BIOMASADENSIFICADA' | 'CARBON' | 'FUELOIL' | 'GASNATURAL' | 'GASOLEO' | 'GLP';
-// Carriers
+// Energy Components
 export type ctypeType = 'PRODUCCION' | 'CONSUMO';
 export type pcsubtypeType = 'INSITU' | 'COGENERACION';
 export type ccsubtypeType = 'EPB' | 'NEPB';
@@ -45,8 +45,6 @@ export type sourceType = 'RED' | 'INSITU' | 'COGENERACION';
 export type destType = 'input' | 'to_grid' | 'to_nEPB';
 export type stepType = 'A' | 'B';
 
-export type TCarrierMeta = { +type: ('META' | 'CARRIER') };
-export type TFactorMeta = { +type: ('META' | 'FACTOR') };
 export type TMeta = { key: string, value: string|number };
 export type TCarrier = { carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
   service: serviceType | legacyserviceType, values: number[],
@@ -54,5 +52,6 @@ export type TCarrier = { carrier: carrierType, ctype: ctypeType, csubtype: csubt
 export type TFactor = { carrier: carrierType, source: sourceType, dest: destType,
   step: stepType, ren: number, nren: number, comment: string };
 
-export type TMCarrier = TMeta | TCarrier;
-export type TMFp = TMeta | TFactor;
+export type TComponents = {| cmeta: Array<TMeta>, cdata: Array<TCarrier> |};
+export type TFactors = {| wmeta: Array<TMeta>, wdata: Array<TFactor>|};
+export type TBalance = {| components: TComponents, factors: TFactors, balance_cr_i: any, balance: any, k_exp: number |};

@@ -1,3 +1,4 @@
+// @flow
 /* -*- coding: utf-8 -*-
 
 Copyright (c) 2016-2017 Ministerio de Fomento
@@ -24,12 +25,13 @@ SOFTWARE.
 Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
+import type {
+  TCarrier, TComponents, TFactors, TBalance
+} from './types.js';
 
 import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
-  is_carrier, is_meta, is_factor,
-  filter_carriers, filter_metas, filter_factors,
   LEGACY_SERVICE_TAG_REGEX,
   parse_carrierdata as epbd_parse_carrierdata,
   parse_wfactordata as epbd_parse_wfactordata
@@ -120,7 +122,7 @@ export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COO
 // -------------------------------------------------------------------------------------
 
 // Custom exception
-export function CteValidityException(message) {
+export function CteValidityException(message: string) {
   this.message = message;
   this.name = 'UserException';
 }
@@ -128,9 +130,9 @@ export function CteValidityException(message) {
 // -------------------- vectores energéticos -------------------------------------------
 
 // Detecta si el vector energético es formalmente correcto
-export function carrier_isvalid(carrier_obj) {
+export function carrier_isvalid(carrier_obj: any): bool {
   const { carrier, ctype, csubtype } = carrier_obj;
-  if (!is_carrier(carrier_obj)) return false;
+  if (!carrier_obj.hasOwnProperty('values')) return false;
   let validcarriers;
   try {
     validcarriers = CTE_VALIDDATA[ctype][csubtype];
@@ -146,83 +148,82 @@ export function carrier_isvalid(carrier_obj) {
 //
 // Comprueba que los vectores energéticos declarados son reconocidos
 // Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
-export function fix_carrierdata(carrierdata) {
-  const fixedcarrierdata = carrierdata.map(c => { // Reescribe servicios legacy
-    if (is_carrier(c) && c.service.match(LEGACY_SERVICE_TAG_REGEX)) {
-      return { ...c, service: LEGACYSERVICESMAP[c.service] }
-    } else {
-      return c;
-    }
-  })
+export function fix_carrierdata(components: any): TComponents {
+  // Reescribe servicios legacy
+  const fixeddata: TCarrier[] = components.cdata.map(c => 
+    c.service.match(LEGACY_SERVICE_TAG_REGEX) ? ({ ...c, service: LEGACYSERVICESMAP[c.service] }) : c
+  );
+
   // Vectores con valores coherentes
-  const carriers = filter_carriers(fixedcarrierdata);
-  const all_carriers_ok = carriers.every(c => carrier_isvalid(c) && CTE_VALIDSERVICES.includes(c.service));
-  // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
-  if (all_carriers_ok) {
-    const envcarriers = carriers.filter(c => c.carrier === 'MEDIOAMBIENTE');
-    const services = [... new Set(envcarriers.map(c => c.service))];
-    const balancecarriers = services.map(service => {
-      const envcarriersforservice = envcarriers.filter(c => c.service === service);
-      const produced = envcarriersforservice.filter(c => c.ctype === 'PRODUCCION');
-      const consumed = envcarriersforservice.filter(c => c.ctype === 'CONSUMO');
-      if (consumed.length === 0) return null;
-      let unbalanced_values = veclistsum(consumed.map(v => v.values));
-      if (produced.length !== 0) {
-        const totproduced = veclistsum(produced.map(v => v.values));
-        unbalanced_values = vecvecdif(unbalanced_values, totproduced).map(v => Math.max(0, v));
-      }
-      return new_carrier('MEDIOAMBIENTE', 'PRODUCCION', 'INSITU', service, unbalanced_values,
-        'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada');
-    }).filter(v => v !== null);
-    return [...fixedcarrierdata, ...balancecarriers];
+  const all_carriers_ok = fixeddata.every(c => carrier_isvalid(c) && CTE_VALIDSERVICES.includes(c.service));
+  if (!all_carriers_ok) {
+    throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(fixeddata.filter(c => !carrier_isvalid(c))) }`);
   }
-  throw new CteValidityException(`Vectores energéticos con valores no coherentes:\n${ JSON.stringify(carriers.filter(c => !carrier_isvalid(c))) }`);
+
+  // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
+  const envcarriers = fixeddata.filter(c => c.carrier === 'MEDIOAMBIENTE');
+  const services = [... new Set(envcarriers.map(c => c.service))];
+  const balancecarriers: TCarrier[] = services.map((service: any): any => {
+    const envcarriersforservice = envcarriers.filter(c => c.service === service);
+    const consumed = envcarriersforservice.filter(c => c.ctype === 'CONSUMO');
+    if (consumed.length === 0) return null;
+    let unbalanced_values = veclistsum(consumed.map(v => v.values));
+    const produced = envcarriersforservice.filter(c => c.ctype === 'PRODUCCION');
+    if (produced.length !== 0) {
+      const totproduced = veclistsum(produced.map(v => v.values));
+      unbalanced_values = vecvecdif(unbalanced_values, totproduced).map(v => Math.max(0, v));
+    }
+    return new_carrier('MEDIOAMBIENTE', 'PRODUCCION', 'INSITU', service, unbalanced_values,
+      'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada');
+  }).filter(v => v !== null);
+
+  return { cmeta: components.cmeta, cdata: [...fixeddata, ...balancecarriers] };
 }
 
 // Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
-export function parse_carrierdata(datastring) {
-  const carrierdata = epbd_parse_carrierdata(datastring);
-  return fix_carrierdata(carrierdata);
+export function parse_carrierdata(datastring: string): TComponents {
+  const components = epbd_parse_carrierdata(datastring);
+  return fix_carrierdata(components);
 }
 
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_wfactordata(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function fix_wfactordata(factors: TFactors, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   // Valores por defecto
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
   // Vectores existentes
-  const CARRIERS = [... new Set(filter_factors(factorsdata).map(f => f.carrier))];
-  let outlist = [...factorsdata];
+  const CARRIERS = [... new Set(factors.wdata.map(f => f.carrier))];
+  let newdata = [...factors.wdata];
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, 1.0, 0.0
-  const envinsitu = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
+  const envinsitu = newdata.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
   if (!envinsitu) {
-    outlist.push(new_factor('MEDIOAMBIENTE', 'INSITU', 'input', 'A', 1.0, 0.0, 'Recursos usados para obtener energía térmica del medioambiente'));
+    newdata.push(new_factor('MEDIOAMBIENTE', 'INSITU', 'input', 'A', 1.0, 0.0, 'Recursos usados para obtener energía térmica del medioambiente'));
   }
   // Asegura que existe MEDIOAMBIENTE, RED, input, A, 1.0, 0.0
-  const envgrid = outlist.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'RED' && f.dest === 'input');
+  const envgrid = newdata.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'RED' && f.dest === 'input');
   if (!envgrid) {
     // MEDIOAMBIENTE, RED, input, A, ren, nren === MEDIOAMBIENTE, INSITU, input, A, ren, nren
-    outlist.push(new_factor('MEDIOAMBIENTE', 'RED', 'input', 'A', 1.0, 0.0, 'Recursos usados para obtener energía térmica del medioambiente (red ficticia)'));
+    newdata.push(new_factor('MEDIOAMBIENTE', 'RED', 'input', 'A', 1.0, 0.0, 'Recursos usados para obtener energía térmica del medioambiente (red ficticia)'));
   }
   // Asegura que existe ELECTRICIDAD, INSITU, input, A, 1.0, 0.0 si hay ELECTRICIDAD
-  const eleinsitu = outlist.find(f => f.carrier === 'ELECTRICIDAD' && f.source === 'INSITU' && f.dest === 'input');
+  const eleinsitu = newdata.find(f => f.carrier === 'ELECTRICIDAD' && f.source === 'INSITU' && f.dest === 'input');
   if (!eleinsitu && CARRIERS.includes('ELECTRICIDAD')) {
-    outlist.push(new_factor('ELECTRICIDAD', 'INSITU', 'input', 'A', 1.0, 0.0, 'Recursos usados para generar electricidad in situ'));
+    newdata.push(new_factor('ELECTRICIDAD', 'INSITU', 'input', 'A', 1.0, 0.0, 'Recursos usados para generar electricidad in situ'));
   }
   // Asegura definición de factores de red para todos los vectores energéticos
-  const carrier_has_input = CARRIERS.map(c => outlist.find(
+  const carrier_has_input = CARRIERS.map(c => newdata.find(
       f => f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A'
   ));
   if (!carrier_has_input.every(v => v)) {
     const missing_carriers = CARRIERS.filter((c, i) => !carrier_has_input[i]);
-    throw new CteValidityException(`Todos los vectores deben definir los factores de paso de red: "VECTOR, INSITU, input, A, fren?, fnren?". Error en "${ missing_carriers }"`);
+    throw new CteValidityException(`Todos los vectores deben definir los factores de paso de red: "VECTOR, INSITU, input, A, fren?, fnren?". Error en "${ missing_carriers.join(', ') }"`);
   }
   // En paso A, el factor input de cogeneración es 0.0, 0.0 ya que el impacto se tiene en cuenta en el suministro del vector de generación
-  if (!outlist.find(({source, dest }) => source === 'COGENERACION' && dest === 'input')) {
-    outlist.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'input', 'A', 0.0, 0.0,
+  if (!newdata.find(({source, dest }) => source === 'COGENERACION' && dest === 'input')) {
+    newdata.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'input', 'A', 0.0, 0.0,
       'Factor de paso generado (el impacto de la cogeneración se tiene en cuenta en el vector de suministro)'));
   }
   // Asegura que todos los vectores con exportación tienen factores de paso a la red y a usos no EPB
@@ -231,64 +232,80 @@ export function fix_wfactordata(factorsdata, options={ cogen: CTE_COGEN_DEFAULTS
     ['ELECTRICIDAD', 'COGENERACION'],
     ['MEDIOAMBIENTE', 'INSITU']
   ].map(([c, s]) => {
-    const cfpsA = outlist.filter(f => f.carrier === c && f.source === s && f.step === 'A');
-    const cfpsB = outlist.filter(f => f.carrier === c && f.source === s && f.step === 'B');
+    const cfpsA = newdata.filter(f => f.carrier === c && f.source === s && f.step === 'A');
+    const cfpsB = newdata.filter(f => f.carrier === c && f.source === s && f.step === 'B');
     const fpAinput = cfpsA.find(f => f.dest === 'input');
-    const fpAredinput = outlist.find(f => f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A');
+    const fpAredinput = newdata.find(f => f.carrier === c && f.source === 'RED' && f.dest === 'input' && f.step === 'A');
     // Asegura que existe VECTOR, SRC, to_grid | to_nEPB, A, ren, nren
     if (!cfpsA.find(f => f.dest === 'to_grid')) {
       if (s !== 'COGENERACION') {
         // VECTOR, SRC, to_grid, A, ren, nren === VECTOR, SRC, input, A, ren, nren
-        outlist.push(new_factor(fpAinput.carrier, fpAinput.source, 'to_grid', 'A', fpAinput.ren, fpAinput.nren,
-          'Recursos usados para producir la energía exportada a la red'));
+        if (fpAinput) {
+          newdata.push(new_factor(fpAinput.carrier, fpAinput.source, 'to_grid', 'A', fpAinput.ren, fpAinput.nren,
+            'Recursos usados para producir la energía exportada a la red'));
+        } else {
+          throw new CteValidityException(`No se ha definido el factor de paso de suministro del vector ${ c } y es necesario para definir el factor de exportación a la red en paso A`);
+        }
       } else {
         // Valores por defecto para ELECTRICIDAD, COGENERACION, to_grid, A, ren, nren - ver 9.6.6.2.3
         const is_default = ((cogen.to_grid.ren === CTE_COGEN_DEFAULTS.to_grid.ren) && (cogen.to_grid.nren === CTE_COGEN_DEFAULTS.to_grid.nren));
-        outlist.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_grid', 'A', cogen.to_grid.ren, cogen.to_grid.nren,
+        newdata.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_grid', 'A', cogen.to_grid.ren, cogen.to_grid.nren,
           `Recursos usados para producir la electricidad cogenerada y exportada a la red (ver EN ISO 52000-1 9.6.6.2.3)${ is_default ? '(Valor predefinido)' : '(Valor de usuario)'}`));
       }
     }
     if (!cfpsA.find(f => f.dest === 'to_nEPB')) {
       if (s !== 'COGENERACION') {
         // VECTOR, SRC, to_nEPB, A, ren, nren === VECTOR, SRC, input, A, ren, nren
-        outlist.push(new_factor(fpAinput.carrier, fpAinput.source, 'to_nEPB', 'A', fpAinput.ren, fpAinput.nren,
-          'Recursos usados para producir la energía exportada a usos no EPB'));
+        if (fpAinput) {
+          newdata.push(new_factor(fpAinput.carrier, fpAinput.source, 'to_nEPB', 'A', fpAinput.ren, fpAinput.nren,
+            'Recursos usados para producir la energía exportada a usos no EPB'));
+        } else {
+          throw new CteValidityException(`No se ha definido el factor de paso de suministro del vector ${ c } y es necesario para definir el factor de exportación a usos no EPB en paso A`);
+        }
       } else {
         // TODO: Si está definido para to_grid (no por defecto) y no para to_nEPB, qué hacemos? usamos por defecto? usamos igual a to_grid?
         // Valores por defecto para ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren - ver 9.6.6.2.3
         const is_default = (cogen.to_nEPB.ren === CTE_COGEN_DEFAULTS.to_nEPB.ren) && (cogen.to_nEPB.nren === CTE_COGEN_DEFAULTS.to_nEPB.nren);
-        outlist.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'A', cogen.to_nEPB.ren, cogen.to_nEPB.nren,
+        newdata.push(new_factor('ELECTRICIDAD', 'COGENERACION', 'to_nEPB', 'A', cogen.to_nEPB.ren, cogen.to_nEPB.nren,
           `Recursos usados para producir la electricidad cogenerada y exportada a usos no EPB (ver EN ISO 52000-1 9.6.6.2.3)${ is_default ? '(Valor predefinido)' : '(Valor de usuario)'}`));
       }
     }
     // Asegura que existe VECTOR, SRC, to_grid | to_nEPB, B, ren, nren
     if (!cfpsB.find(f => f.dest === 'to_grid')) {
       // VECTOR, SRC, to_grid, B, ren, nren === VECTOR, RED, input, A, ren, nren
-      outlist.push(new_factor(fpAredinput.carrier, s, 'to_grid', 'B', fpAredinput.ren, fpAredinput.nren,
-        'Recursos ahorrados a la red por la energía producida in situ y exportada a la red'));
+      if (fpAredinput) {
+        newdata.push(new_factor(fpAredinput.carrier, s, 'to_grid', 'B', fpAredinput.ren, fpAredinput.nren,
+          'Recursos ahorrados a la red por la energía producida in situ y exportada a la red'));
+      } else {
+        throw new CteValidityException(`No se ha definido el factor de paso de suministro del vector ${ c } y es necesario para definir el factor de exportación a la red en paso B`);
+      }
     }
     if (!cfpsB.find(f => f.dest === 'to_nEPB')) {
       // VECTOR, SRC, to_nEPB, B, ren, nren === VECTOR, RED, input, A, ren, nren
-      outlist.push(new_factor(fpAredinput.carrier, s, 'to_nEPB', 'B', fpAredinput.ren, fpAredinput.nren,
-        'Recursos ahorrados a la red por la energía producida in situ y exportada a usos no EPB'));
+      if (fpAredinput) {
+        newdata.push(new_factor(fpAredinput.carrier, s, 'to_nEPB', 'B', fpAredinput.ren, fpAredinput.nren,
+          'Recursos ahorrados a la red por la energía producida in situ y exportada a usos no EPB'));
+      } else {
+        throw new CteValidityException(`No se ha definido el factor de paso de suministro del vector ${ c } y es necesario para definir el factor de exportación a usos no EPB en paso B`);
+      }
     }
   });
   // Asegura que existe RED1 | RED2, RED, input, A, ren, nren
-  const red1 = outlist.find(f => f.carrier === 'RED1' && f.source === 'RED' && f.dest === 'input');
+  const red1 = newdata.find(f => f.carrier === 'RED1' && f.source === 'RED' && f.dest === 'input');
   if (!red1) {
-    outlist.push(new_factor('RED1', 'RED', 'input', 'A',
+    newdata.push(new_factor(('RED1': any), 'RED', 'input', 'A',
       red.RED1.ren, red.RED1.nren, 'Recursos usados para suministrar energía de la red de distrito 1 (definible por el usuario)'));
   }
-  const red2 = outlist.find(f => f.carrier === 'RED2' && f.source === 'RED' && f.dest === 'input');
+  const red2 = newdata.find(f => f.carrier === 'RED2' && f.source === 'RED' && f.dest === 'input');
   if (!red2) {
-    outlist.push(new_factor('RED2', 'RED', 'input', 'A',
+    newdata.push(new_factor(('RED2': any), 'RED', 'input', 'A',
       red.RED2.ren, red.RED2.nren, 'Recursos usados para suministrar energía de la red de distrito 2 (definible por el usuario)'));
   }
-  return outlist;
+  return { wmeta: factors.wmeta, wdata: newdata };
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_wfactordata(factorsstring, options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function parse_wfactordata(factorsstring: string, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
   const factorsdata = epbd_parse_wfactordata(factorsstring);
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
@@ -299,30 +316,32 @@ export function parse_wfactordata(factorsstring, options={ cogen: CTE_COGEN_DEFA
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_wfactordata(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function new_wfactordata(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
   // Vectores ELECTRICIDAD* de otras localizaciones
   const OTHERLOCELEC = CTE_LOCS.filter(l => l !== loc).map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
   // Selecciona vectores ELECTRICIDAD* de la localización y renombra a ELECTRICIDAD
-  const factors = FACTORESDEPASO
+  const wdata = FACTORESDEPASO.wdata
     .filter(f => !OTHERLOCELEC.includes(f.carrier))
-    .map(f => is_factor(f) && f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
+    .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
+
   // Incluye metadatos
-  const cte_metas = [];
-  if (!factors.find(f => f.key === 'CTE_FUENTE')) {
-    cte_metas.push(new_meta('CTE_FUENTE', 'CTE2013'));
+  const wmeta = [ ...FACTORESDEPASO.wmeta ];
+  if (!wmeta.find(f => f.key === 'CTE_FUENTE')) {
+    wmeta.push(new_meta('CTE_FUENTE', 'CTE2013'));
   }
-  if (!factors.find(f => f.key === 'CTE_COMENTARIO')) {
-    cte_metas.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
+  if (!wmeta.find(f => f.key === 'CTE_COMENTARIO')) {
+    wmeta.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
   }
-  cte_metas.push(new_meta('CTE_LOC', loc));
+  wmeta.push(new_meta('CTE_LOC', loc));
+
   // Completa factores resultantes
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactordata([ ...cte_metas, ...factors], { cogen, red });
+  return fix_wfactordata({ wmeta, wdata }, { cogen, red });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
@@ -332,18 +351,19 @@ export function new_wfactordata(loc=CTE_LOCS[0], options={ cogen: CTE_COGEN_DEFA
 //  - de cogeneración si no hay cogeneración
 //  - para exportación a usos no EPB si no se aparecen en los datos
 //  - de electricidad in situ si no aparece una producción de ese tipo
-export function strip_wfactordata(factorsdata, carriersdata) {
-  const CARRIERS = [... new Set(filter_carriers(carriersdata).map(c => c.carrier))];
-  const HASCOGEN = carriersdata.map(c => c.csubtype).includes('COGENERACION');
-  const HASNEPB =  carriersdata.map(c => c.csubtype).includes('NEPB');
-  const HASELECINSITU = (carriersdata.filter(c => is_carrier(c) && c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
+export function strip_wfactordata(wfactors: TFactors, components: TComponents): TFactors {
+  const cdata = components.cdata;
+  const CARRIERS = [... new Set(cdata.map(c => c.carrier))];
+  const HASCOGEN = cdata.map(c => c.csubtype).includes('COGENERACION');
+  const HASNEPB =  cdata.map(c => c.csubtype).includes('NEPB');
+  const HASELECINSITU = (cdata.filter(c => c.carrier.startsWith('ELECTRICIDAD') && c.csubtype === 'INSITU')).length > 0;
 
-  const filteredfactors = factorsdata
-  .filter(f => is_meta(f) || CARRIERS.includes(f.carrier))
-  .filter(f => is_meta(f) || f.source !== 'COGENERACION' || HASCOGEN)
-  .filter(f => is_meta(f) || f.dest !== 'to_nEPB' || HASNEPB)
-  .filter(f => is_meta(f) || f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
-  return filteredfactors;
+  const wdata = wfactors.wdata
+  .filter(f => CARRIERS.includes(f.carrier))
+  .filter(f => f.source !== 'COGENERACION' || HASCOGEN)
+  .filter(f => f.dest !== 'to_nEPB' || HASNEPB)
+  .filter(f => f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
+  return { wmeta: wfactors.wmeta, wdata };
 }
 
 export const CTE_FP = parse_wfactordata(CTE_FP_STR);
@@ -352,7 +372,7 @@ export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 // Métodos de salida -------------------------------------------------------------------
 
 // Muestra balance, paso B, de forma simplificada
-export function balance_to_plain(balanceobj, area=1.0) {
+export function balance_to_plain(balanceobj: TBalance, area: number=1.0) {
   const { ren, nren } = balanceobj.balance.B;
   const { k_exp } = balanceobj;
   return `Area_ref = ${ area.toFixed(2) } [m2]\n`
@@ -372,13 +392,13 @@ export function balance_to_plain(balanceobj, area=1.0) {
 }
 
 // Muestra balance y área de referencia en formato JSON
-export function balance_to_JSON(balanceobj, area=1.0) {
+export function balance_to_JSON(balanceobj: TBalance, area: number=1.0) {
   return JSON.stringify({ ...balanceobj, arearef: area }, null, '  ');
 }
 
 const escapeXML = unescaped => unescaped.replace(
   /[<>&'"]/g,
-  m => {
+  (m: any): any => {
     switch (m) {
       case '<': return '&lt;';
       case '>': return '&gt;';
@@ -389,17 +409,17 @@ const escapeXML = unescaped => unescaped.replace(
   }
 );
 
-export function balance_to_XML(balanceobj, area=1.0) {
-  const { carrierdata, fpdata, k_exp, balance } = balanceobj;
+export function balance_to_XML(balanceobj: TBalance, area: number=1.0) {
+  const { components, factors, k_exp, balance } = balanceobj;
   const { ren, nren } = balance.B;
-  const cmetas = filter_metas(carrierdata);
-  const carriers = filter_carriers(carrierdata);
-  const fmetas = filter_metas(fpdata);
-  const fps = filter_factors(fpdata);
+  const cmeta = components.cmeta;
+  const cdata = components.cdata;
+  const wmeta = factors.wmeta;
+  const wdata = factors.wdata;
 
-  const cmetastring = cmetas.map(m =>
+  const cmetastring = cmeta.map(m =>
     `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
-  const cdatastring = carriers.map(c => {
+  const cdatastring = cdata.map(c => {
     const { carrier, ctype, csubtype, service, values, comment } = c;
     const vals = values.map(v => `<v>${ v.toFixed(2) }</v>`).join('');
     return `    <vector>
@@ -411,9 +431,9 @@ export function balance_to_XML(balanceobj, area=1.0) {
       <comment>${ escapeXML(comment) }</comment>
     </vector>`;
   }).join('\n');
-  const fmetastring = fmetas.map(m =>
+  const wmetastring = wmeta.map(m =>
   `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
-  const fdatastring = fps.map(f => {
+  const wdatastring = wdata.map(f => {
     const { carrier, source, dest, step, ren, nren, comment } = f;
     return `    <fp>
       <carrier>${ carrier }</carrier>
@@ -431,8 +451,8 @@ ${ cmetastring }
 ${ cdatastring }
   </vectores>
   <fps>
-${ fmetastring }
-${ fdatastring }
+${ wmetastring }
+${ wdatastring }
   </fps>
   <kexp>${ k_exp.toFixed(2) }</kexp>
   <ep><!-- ep [kWh/m2.an] -->
