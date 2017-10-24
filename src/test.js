@@ -399,4 +399,8 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
     console.log("[ERROR] Balance con factores simplificados: ", showEP(res2.balance.B, 'B'));
   }
   console.log(cte.balance_to_plain(res));
+  const balxml = cte.balance_to_XML(res);
+  console.log("[OK] Salida de Balance en XML");
+  const baljson = cte.balance_to_JSON(res);
+  console.log("[OK] Salida de Balance en JSON");
 }
