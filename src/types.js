@@ -46,12 +46,12 @@ export type destType = 'input' | 'to_grid' | 'to_nEPB';
 export type stepType = 'A' | 'B';
 
 export type TMeta = { key: string, value: string|number };
-export type TCarrier = { carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
+export type TComponent = { carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
   service: serviceType | legacyserviceType, values: number[],
   comment: string };
 export type TFactor = { carrier: carrierType, source: sourceType, dest: destType,
   step: stepType, ren: number, nren: number, comment: string };
 
-export type TComponents = {| cmeta: Array<TMeta>, cdata: Array<TCarrier> |};
-export type TFactors = {| wmeta: Array<TMeta>, wdata: Array<TFactor>|};
-export type TBalance = {| components: TComponents, factors: TFactors, balance_cr_i: any, balance: any, k_exp: number |};
+export type TComponents = {| cmeta: TMeta[], cdata: TComponent[] |};
+export type TFactors = {| wmeta: TMeta[], wdata: TFactor[] |};
+export type TBalance = {| components: TComponents, wfactors: TFactors, balance_cr_i: any, balance: any, k_exp: number |};

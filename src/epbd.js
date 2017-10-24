@@ -44,7 +44,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 import type {
   carrierType, ctypeType, csubtypeType, serviceType, cteserviceType, legacyserviceType,
   sourceType, destType, stepType,
-  TCarrier, TMeta, TFactor, TComponents, TFactors
+  TComponent, TMeta, TFactor, TComponents, TFactors
 } from './types.js';
 
 import {
@@ -64,14 +64,14 @@ function UserException(message) {
 export const FLOAT_REGEX = /^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$/;
 export const TAG_REGEX = /[A-Za-z]+[0-9]*/;
 export const LEGACY_SERVICE_TAG_REGEX = /^[ ]*(WATERSYSTEMS|HEATING|COOLING|FANS)/;
-export const LEGACY_SERVICE_TAGS: Array<legacyserviceType> = ['WATERSYSTEMS', 'HEATING', 'COOLING', 'FANS'];
-export const CTE_SERVICE_TAGS: Array<cteserviceType> = ['NDEF', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
+export const LEGACY_SERVICE_TAGS: legacyserviceType[] = ['WATERSYSTEMS', 'HEATING', 'COOLING', 'FANS'];
+export const CTE_SERVICE_TAGS: cteserviceType[] = ['NDEF', 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU'];
 
 // Utility constructors
 export const new_meta = (key: string, value: string | number): TMeta =>
   ({ key, value });
 export const new_carrier = (carrier: carrierType, ctype: ctypeType, csubtype: csubtypeType,
-  service: serviceType, values: Array<number>, comment: string=''): TCarrier =>
+  service: serviceType, values: number[], comment: string=''): TComponent =>
   ({ carrier, ctype, csubtype, service, values, comment });
 export const new_factor = (carrier: carrierType, source: sourceType, dest: destType, step: stepType,
   ren: number, nren: number, comment: string=''): TFactor =>
@@ -79,7 +79,7 @@ export const new_factor = (carrier: carrierType, source: sourceType, dest: destT
 
 // Serialize basic types to string
 export const meta2string = (mm: TMeta): string => `#META ${ mm.key }: ${ mm.value }`;
-export function carrier2string(cc: TCarrier): string {
+export function carrier2string(cc: TComponent): string {
   const { carrier, ctype, csubtype, service, values, comment } = cc;
   const valuelist = values.map(v=> v.toFixed(2)).join(',');
   return `${ carrier }, ${ ctype }, ${ csubtype }, ${ service }, ${ valuelist }${ comment !== '' ? ' # ' + comment : '' }`;
@@ -132,13 +132,13 @@ export function fp2string(ff: TFactor): string {
 // * objects of type 'META' represent metadata
 //   - key is the metadata name
 //   - value is the metadata value
-export function parse_carrierdata(datastring: string): TComponents {
+export function parse_components(datastring: string): TComponents {
   const datalines = datastring.replace('\n\r', '\n').split('\n')
         .map(l => l.trim())
         .filter(l => !(l === '' || l.startsWith('vector')))
         .filter(v => v !== null);
 
-  const cdata: Array<TCarrier> = datalines
+  const cdata: TComponent[] = datalines
     .filter(line => !line.startsWith('#'))
     .map(line => {
       const [fieldsstring, comment = ''] = line.split('#', 2).map(pp => pp.trim());
@@ -163,7 +163,7 @@ export function parse_carrierdata(datastring: string): TComponents {
         service = 'NDEF';
       }
 
-      let values: Array<number>;
+      let values: number[];
       try {
         values = stringvalues.map(Number);
       } catch (e) {
@@ -186,7 +186,7 @@ export function parse_carrierdata(datastring: string): TComponents {
 ${ errLengths.length } lines with less than ${ numSteps } values.`);
   }
 
-  const cmeta: Array<TMeta> = datalines
+  const cmeta: TMeta[] = datalines
     .filter(line => line.startsWith('#META') || line.startsWith('#CTE_'))
     .map(line => line.slice('#META'.length)) // strips #CTE_ too
     .map(line => {
@@ -199,7 +199,7 @@ ${ errLengths.length } lines with less than ${ numSteps } values.`);
 }
 
 // Convert components (carrier data with metadata) to string
-export function serialize_carrierdata(components: TComponents): string {
+export function serialize_components(components: TComponents): string {
   const cmetas = components.cmeta.map(meta2string);
   const carriers = components.cdata.map(carrier2string);
   return [...cmetas, ...carriers].join('\n');
@@ -226,15 +226,15 @@ export function serialize_carrierdata(components: TComponents): string {
 //
 // Returns: Weighting factors object with lists of metadata (meta) and weighting factor objects (data).
 //
-export function parse_wfactordata(factorsstring: string): TFactors {
-  const contentlines = factorsstring.replace('\n\r', '\n')
+export function parse_wfactors(wfactorsstring: string): TFactors {
+  const contentlines = wfactorsstring.replace('\n\r', '\n')
     .split('\n').map(l => l.trim()).filter(l => l !== '' && !l.startsWith('vector,'));
 
-  const wmeta: Array<TMeta> = contentlines.filter(l => l.startsWith('#META'))
+  const wmeta: TMeta[] = contentlines.filter(l => l.startsWith('#META'))
     .map(l => l.substr('#META'.length).split(':', 2).map(e => e.trim()))
     .map(([key, value = '']) => new_meta(key, value));
 
-  const wdata: Array<TFactor> = contentlines.filter(l => !l.startsWith('#'))
+  const wdata: TFactor[] = contentlines.filter(l => !l.startsWith('#'))
     .map(l => l.split('#', 2).map(e => e.trim())) // [fields, str | undefined]
     .map(([fieldsstring, comment = '']) => {
       const fieldslist: any[] = fieldsstring.split(',').map(e => e.trim());
@@ -254,9 +254,9 @@ export function parse_wfactordata(factorsstring: string): TFactors {
 }
 
 // Convert weighting factors object to string
-export function serialize_wfactordata(factors: TFactors): string {
-  const fmetas = factors.wmeta.map(meta2string);
-  const fdata = factors.wdata.map(fp2string);
+export function serialize_wfactors(wfactors: TFactors): string {
+  const fmetas = wfactors.wmeta.map(meta2string);
+  const fdata = wfactors.wdata.map(fp2string);
   return [...fmetas, ...fdata].join('\n');
 }
 
@@ -281,7 +281,7 @@ export function serialize_wfactordata(factors: TFactors): string {
 //    This follows the ISO EN 52000-1 procedure for calculation of delivered,
 //    exported and weighted energy balance.
 //
-function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
+function balance_cr(cr_i_list: TComponent[], fp_cr: TFactor[], k_exp: number) {
   // ------------ Delivered and exported energy
   const CURRENTCARRIER = cr_i_list[0].carrier;
   const numSteps = cr_i_list[0].values.length;
@@ -622,9 +622,9 @@ function balance_cr(cr_i_list: TCarrier[], fp_cr: TFactor[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(components: TComponents, factors: TFactors, k_exp: number) {
+export function energy_performance(components: TComponents, wfactors: TFactors, k_exp: number) {
   const carriers = components.cdata;
-  const fps = factors.wdata;
+  const fps = wfactors.wdata;
   const CARRIERLIST = [... new Set(carriers.map(e => e.carrier))];
 
   // Compute balance
@@ -658,7 +658,7 @@ export function energy_performance(components: TComponents, factors: TFactors, k
 
   return {
     components,
-    factors,
+    wfactors,
     k_exp,
     balance_cr_i,
     balance

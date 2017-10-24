@@ -26,15 +26,15 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
 import type {
-  TCarrier, TComponents, TFactors, TBalance
+  TComponent, TComponents, TFactors, TBalance
 } from './types.js';
 
 import { veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
   LEGACY_SERVICE_TAG_REGEX,
-  parse_carrierdata as epbd_parse_carrierdata,
-  parse_wfactordata as epbd_parse_wfactordata
+  parse_components as epbd_parse_components,
+  parse_wfactors as epbd_parse_wfactors
 } from './epbd.js';
 
 // ---------------------------------------------------------------------------------------------------------
@@ -148,9 +148,9 @@ export function carrier_isvalid(carrier_obj: any): bool {
 //
 // Comprueba que los vectores energéticos declarados son reconocidos
 // Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
-export function fix_carrierdata(components: any): TComponents {
+export function fix_components(components: any): TComponents {
   // Reescribe servicios legacy
-  const fixeddata: TCarrier[] = components.cdata.map(c => 
+  const fixeddata: TComponent[] = components.cdata.map(c =>
     c.service.match(LEGACY_SERVICE_TAG_REGEX) ? ({ ...c, service: LEGACYSERVICESMAP[c.service] }) : c
   );
 
@@ -163,7 +163,7 @@ export function fix_carrierdata(components: any): TComponents {
   // Completa consumos de energía térmica insitu (MEDIOAMBIENTE) sin producción declarada
   const envcarriers = fixeddata.filter(c => c.carrier === 'MEDIOAMBIENTE');
   const services = [... new Set(envcarriers.map(c => c.service))];
-  const balancecarriers: TCarrier[] = services.map((service: any): any => {
+  const balancecarriers: TComponent[] = services.map((service: any): any => {
     const envcarriersforservice = envcarriers.filter(c => c.service === service);
     const consumed = envcarriersforservice.filter(c => c.ctype === 'CONSUMO');
     if (consumed.length === 0) return null;
@@ -181,22 +181,22 @@ export function fix_carrierdata(components: any): TComponents {
 }
 
 // Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
-export function parse_carrierdata(datastring: string): TComponents {
-  const components = epbd_parse_carrierdata(datastring);
-  return fix_carrierdata(components);
+export function parse_components(datastring: string): TComponents {
+  const components = epbd_parse_components(datastring);
+  return fix_components(components);
 }
 
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_wfactordata(factors: TFactors, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+export function fix_wfactors(wfactors: TFactors, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
   // Valores por defecto
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
   // Vectores existentes
-  const CARRIERS = [... new Set(factors.wdata.map(f => f.carrier))];
-  let newdata = [...factors.wdata];
+  const CARRIERS = [... new Set(wfactors.wdata.map(f => f.carrier))];
+  let newdata = [...wfactors.wdata];
   // Asegura que existe MEDIOAMBIENTE, INSITU, input, A, 1.0, 0.0
   const envinsitu = newdata.find(f => f.carrier === 'MEDIOAMBIENTE' && f.source === 'INSITU' && f.dest === 'input');
   if (!envinsitu) {
@@ -301,22 +301,22 @@ export function fix_wfactordata(factors: TFactors, options: any={ cogen: CTE_COG
     newdata.push(new_factor(('RED2': any), 'RED', 'input', 'A',
       red.RED2.ren, red.RED2.nren, 'Recursos usados para suministrar energía de la red de distrito 2 (definible por el usuario)'));
   }
-  return { wmeta: factors.wmeta, wdata: newdata };
+  return { wmeta: wfactors.wmeta, wdata: newdata };
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_wfactordata(factorsstring: string, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
-  const factorsdata = epbd_parse_wfactordata(factorsstring);
+export function parse_wfactors(wfactorsstring: string, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
+  const wfactors = epbd_parse_wfactors(wfactorsstring);
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactordata(factorsdata, { cogen, red });
+  return fix_wfactors(wfactors, { cogen, red });
 }
 
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_wfactordata(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
+export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
@@ -341,7 +341,7 @@ export function new_wfactordata(loc: string=CTE_LOCS[0], options: any={ cogen: C
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactordata({ wmeta, wdata }, { cogen, red });
+  return fix_wfactors({ wmeta, wdata }, { cogen, red });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
@@ -351,7 +351,7 @@ export function new_wfactordata(loc: string=CTE_LOCS[0], options: any={ cogen: C
 //  - de cogeneración si no hay cogeneración
 //  - para exportación a usos no EPB si no se aparecen en los datos
 //  - de electricidad in situ si no aparece una producción de ese tipo
-export function strip_wfactordata(wfactors: TFactors, components: TComponents): TFactors {
+export function strip_wfactors(wfactors: TFactors, components: TComponents): TFactors {
   const cdata = components.cdata;
   const CARRIERS = [... new Set(cdata.map(c => c.carrier))];
   const HASCOGEN = cdata.map(c => c.csubtype).includes('COGENERACION');
@@ -366,7 +366,7 @@ export function strip_wfactordata(wfactors: TFactors, components: TComponents): 
   return { wmeta: wfactors.wmeta, wdata };
 }
 
-export const CTE_FP = parse_wfactordata(CTE_FP_STR);
+export const CTE_FP = parse_wfactors(CTE_FP_STR);
 export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 
 // Métodos de salida -------------------------------------------------------------------
@@ -410,12 +410,12 @@ const escapeXML = unescaped => unescaped.replace(
 );
 
 export function balance_to_XML(balanceobj: TBalance, area: number=1.0) {
-  const { components, factors, k_exp, balance } = balanceobj;
+  const { components, wfactors, k_exp, balance } = balanceobj;
   const { ren, nren } = balance.B;
   const cmeta = components.cmeta;
   const cdata = components.cdata;
-  const wmeta = factors.wmeta;
-  const wdata = factors.wdata;
+  const wmeta = wfactors.wmeta;
+  const wdata = wfactors.wdata;
 
   const cmetastring = cmeta.map(m =>
     `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');

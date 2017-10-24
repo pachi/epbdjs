@@ -27,15 +27,15 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 
 /* eslint-disable no-console */
 import { 
-  parse_wfactordata,
-  serialize_wfactordata,
+  parse_wfactors,
+  serialize_wfactors,
   energy_performance,
   cte
 } from './index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const TESTFPJ = parse_wfactordata(`vector, fuente, uso, step, ren, nren
+const TESTFPJ = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -46,14 +46,14 @@ MEDIOAMBIENTE, INSITU, input,  A, 1.0, 0.0
 MEDIOAMBIENTE, RED, input,  A, 1.0, 0.0
 `);
 
-const TESTFPJ7 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
+const TESTFPJ7 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 0.0, 2.5
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ8 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
+const TESTFPJ8 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 GASNATURAL, RED, input,A, 0.0, 1.1
 BIOCARBURANTE, RED, input, A, 1.0, 0.1
@@ -61,7 +61,7 @@ ELECTRICIDAD, COGENERACION, input, A, 0.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, A, 2.27, 0.23
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0`);
 
-const TESTFPJ9 = parse_wfactordata(`vector, fuente, uso, step, ren, nren
+const TESTFPJ9 = parse_wfactors(`vector, fuente, uso, step, ren, nren
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 ELECTRICIDAD, INSITU, input,   A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, A, 1.0, 0.0
@@ -69,7 +69,7 @@ ELECTRICIDAD, INSITU, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, INSITU, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, INSITU, to_nEPB, B, 0.5, 2.0`);
 
-const TESTFP = parse_wfactordata(`vector, fuente, uso, step, ren, nren
+const TESTFP = parse_wfactors(`vector, fuente, uso, step, ren, nren
 
 ELECTRICIDAD, RED, input, A, 0.5, 2.0
 
@@ -167,23 +167,23 @@ function check(casename, computed, result, verbose = false) {
 }
 
 // Compute primary energy (weighted energy) from datalist
-function epfromdata(carrierdata, fpdata, kexp) {
-  return energy_performance(carrierdata, fpdata, kexp);
+function epfromdata(components, fpdata, kexp) {
+  return energy_performance(components, fpdata, kexp);
 }
 
 // Compute primary energy (weighted energy) from data in filename
 function epfromfile(filename, fpdata, kexp) {
   const datapath = path.resolve(__dirname, 'examples', filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  const carrierdata = cte.parse_carrierdata(datastring)
-  return epfromdata(carrierdata, fpdata, kexp);
+  const components = cte.parse_components(datastring)
+  return epfromdata(components, fpdata, kexp);
 }
 
 // Return carrier data from filename (path relative to this test file)
-function carrierdatafromfile(filename) {
+function componentsfromfile(filename) {
   const datapath = path.resolve(__dirname, filename);
   const datastring = fs.readFileSync(datapath, 'utf-8');
-  return cte.parse_carrierdata(datastring);
+  return cte.parse_components(datastring);
 }
 
 // Tests ----------------------------------------------------------
@@ -319,7 +319,7 @@ console.log("*** Lectura de cadena de factores de paso");
 console.log("*** Serialización de factores de paso");
 {
   try {
-    serialize_wfactordata(CTEFP);
+    serialize_wfactors(CTEFP);
   } catch(e) {
     console.log("[ERROR] al serializar factores de paso");
   } finally {
@@ -329,7 +329,7 @@ console.log("*** Serialización de factores de paso");
 
 console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
-  const components = carrierdatafromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
+  const components = componentsfromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
   const cmetas = components.cmeta;
   const cdata = components.cdata
     .filter(cte.carrier_isvalid);
@@ -343,7 +343,7 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 
 console.log("*** Lectura de archivo .csv con definición de servicios");
 {
-  const components = carrierdatafromfile('examples/newServicesFormat.csv');
+  const components = componentsfromfile('examples/newServicesFormat.csv');
   const cmetas = components.cmeta;
   const cdata = components.cdata
     .filter(cte.carrier_isvalid);
@@ -358,19 +358,19 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
 {
   const FPFILE = path.resolve(__dirname, 'examples', 'factores_paso_20140203.csv');
   const KEXP = 0.0;
-  const components = carrierdatafromfile('examples/cte_test_carriers.csv');
+  const components = componentsfromfile('examples/cte_test_carriers.csv');
 
   // Read weighting factors
-  const fpstring = fs.readFileSync(FPFILE, 'utf-8');
-  const fp = cte.parse_wfactordata(fpstring);
+  const wfactorsstring = fs.readFileSync(FPFILE, 'utf-8');
+  const fp = cte.parse_wfactors(wfactorsstring);
   if(fp) {
     console.log("[OK] Lectura correcta de factores de paso del archivo: ", path.basename(FPFILE));
   }
-  const fpgen = cte.new_wfactordata('PENINSULA');
+  const fpgen = cte.new_wfactors('PENINSULA');
   if(fpgen) {
     console.log("[OK] Generación correcta de factores de paso para PENINSULA");
   }
-  const fpstrip = cte.strip_wfactordata(fpgen, components);
+  const fpstrip = cte.strip_wfactors(fpgen, components);
   if (fpgen.length === 30 && fpstrip.length === 11) {
     console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
   } else {
