@@ -622,7 +622,10 @@ function balance_cr(cr_i_list: TComponent[], fp_cr: TFactor[], k_exp: number) {
 // Compute overall energy performance aggregating results for all energy carriers
 //
 //
-export function energy_performance(components: TComponents, wfactors: TFactors, k_exp: number) {
+export function energy_performance(components: TComponents, wfactors: TFactors, k_exp: number, arearef: number=1.0) {
+  if (arearef === 0) {
+    throw new UserException(`Reference area can't be null`);
+  }
   const carriers = components.cdata;
   const fps = wfactors.wdata;
   const CARRIERLIST = [... new Set(carriers.map(e => e.carrier))];
@@ -652,15 +655,29 @@ export function energy_performance(components: TComponents, wfactors: TFactors, 
         we_exp: { ren: acc.we_exp.ren + balance_cr_i[cr].we_exported_an.ren,
                   nren: acc.we_exp.nren + balance_cr_i[cr].we_exported_an.nren }
       }),
-    { A: { ren: 0, nren: 0 }, B: { ren: 0, nren: 0 },
-      we_del: { ren: 0, nren: 0 }, we_exp_A: { ren: 0, nren: 0 }, we_exp: { ren: 0, nren: 0 } }
+    { A: { ren: 0, nren: 0 },
+      B: { ren: 0, nren: 0 },
+      we_del: { ren: 0, nren: 0 },
+      we_exp_A: { ren: 0, nren: 0 },
+      we_exp: { ren: 0, nren: 0 }
+    }
     );
+
+  const balance_m2 = {
+    A: { ren: balance.A.ren / arearef, nren: balance.A.nren / arearef },
+    B: { ren: balance.B.ren / arearef, nren: balance.B.nren / arearef },
+    we_del: { ren: balance.we_del.ren / arearef, nren: balance.we_del.nren / arearef },
+    we_exp_A: { ren: balance.we_exp_A.ren / arearef, nren: balance.we_exp_A.nren / arearef },
+    we_exp: { ren: balance.we_exp.ren / arearef, nren: balance.we_exp.nren / arearef }
+  };
 
   return {
     components,
     wfactors,
+    arearef,
     k_exp,
     balance_cr_i,
-    balance
+    balance,
+    balance_m2
   };
 }

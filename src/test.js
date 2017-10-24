@@ -371,10 +371,11 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
     console.log("[OK] Generación correcta de factores de paso para PENINSULA");
   }
   const fpstrip = cte.strip_wfactors(fpgen, components);
-  if (fpgen.length === 30 && fpstrip.length === 11) {
-    console.log(`[OK] Reducción factores de paso de ${ fpgen.length } a ${ fpstrip.length }`);
+  if (fpgen.wdata.length === 27 && fpstrip.wdata.length === 8) {
+    console.log(`[OK] Reducción factores de paso de ${ fpgen.wdata.length } a ${ fpstrip.wdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ fpgen.length } / ${ fpstrip.length }. Esperados 30 / 11`);
+    console.log(`[ERROR] Encontrados (antes/después) ${ fpgen.wdata.length } / ${ fpstrip.wdata.length }. Esperados 30 / 11`);
+    console.log(fpstrip.wdata);
   }
 
   const res = energy_performance(components, fp, KEXP);

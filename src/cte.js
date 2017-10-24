@@ -372,28 +372,23 @@ export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 // Métodos de salida -------------------------------------------------------------------
 
 // Muestra balance, paso B, de forma simplificada
-export function balance_to_plain(balanceobj: TBalance, area: number=1.0) {
-  const { ren, nren } = balanceobj.balance.B;
-  const { k_exp } = balanceobj;
-  return `Area_ref = ${ area.toFixed(2) } [m2]\n`
+export function balance_to_plain(balanceobj: TBalance) {
+  const { k_exp, arearef, balance_m2 } = balanceobj;
+  const { ren, nren } = balance_m2.B;
+
+  return `Area_ref = ${ arearef.toFixed(2) } [m2]\n`
     + `k_exp = ${ k_exp.toFixed(2) }\n`
     +
-   `C_ep [kWh/an]`
+    `C_ep [kWh/m2.an]`
     + `: ren = ${ ren.toFixed(1) }`
     + `, nren = ${ nren.toFixed(1) }`
     + `, tot = ${ (ren + nren).toFixed(1) }`
-    + `, RER = ${ (ren / (ren + nren)).toFixed(2) }\n`
-    +
-    `C_ep [kWh/m2.an]`
-    + `: ren = ${ (ren / area).toFixed(1) }`
-    + `, nren = ${ (nren / area).toFixed(1) }`
-    + `, tot = ${ ((ren + nren) / area).toFixed(1) }`
     + `, RER = ${ (ren / (ren + nren)).toFixed(2) }`;
 }
 
 // Muestra balance y área de referencia en formato JSON
-export function balance_to_JSON(balanceobj: TBalance, area: number=1.0) {
-  return JSON.stringify({ ...balanceobj, arearef: area }, null, '  ');
+export function balance_to_JSON(balanceobj: TBalance) {
+  return JSON.stringify(balanceobj, null, '  ');
 }
 
 const escapeXML = unescaped => unescaped.replace(
@@ -409,9 +404,9 @@ const escapeXML = unescaped => unescaped.replace(
   }
 );
 
-export function balance_to_XML(balanceobj: TBalance, area: number=1.0) {
-  const { components, wfactors, k_exp, balance } = balanceobj;
-  const { ren, nren } = balance.B;
+export function balance_to_XML(balanceobj: TBalance) {
+  const { components, wfactors, k_exp, arearef, balance_m2 } = balanceobj;
+  const { ren, nren } = balance_m2.B;
   const cmeta = components.cmeta;
   const cdata = components.cdata;
   const wmeta = wfactors.wmeta;
@@ -455,11 +450,11 @@ ${ wmetastring }
 ${ wdatastring }
   </fps>
   <kexp>${ k_exp.toFixed(2) }</kexp>
-  <ep><!-- ep [kWh/m2.an] -->
-    <tot>${ ((ren + nren) / area).toFixed(1) }</tot>
-    <ren>${ (ren / area).toFixed(1) }</ren>
-    <nren>${ (nren / area).toFixed(1) }</nren>
-  </ep>
-  <arearef>${ area.toFixed(2) }</arearef><!-- área de referencia [m2] -->
+  <arearef>${ arearef.toFixed(2) }</arearef><!-- área de referencia [m2] -->
+  <ep_m2><!-- ep [kWh/m2.an] -->
+    <tot>${ (ren + nren).toFixed(1) }</tot>
+    <ren>${ ren.toFixed(1) }</ren>
+    <nren>${ nren.toFixed(1) }</nren>
+  </ep_m2>
 </CTEEPBD>`;
 }

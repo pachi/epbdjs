@@ -54,4 +54,7 @@ export type TFactor = { carrier: carrierType, source: sourceType, dest: destType
 
 export type TComponents = {| cmeta: TMeta[], cdata: TComponent[] |};
 export type TFactors = {| wmeta: TMeta[], wdata: TFactor[] |};
-export type TBalance = {| components: TComponents, wfactors: TFactors, balance_cr_i: any, balance: any, k_exp: number |};
+export type TBalance = {| components: TComponents, wfactors: TFactors,
+  k_exp: number, arearef: number,
+  balance_cr_i: any, balance: any, balance_m2: any
+|};
