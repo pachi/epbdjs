@@ -323,12 +323,12 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
   // Vectores ELECTRICIDAD* de otras localizaciones
   const OTHERLOCELEC = CTE_LOCS.filter(l => l !== loc).map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
   // Selecciona vectores ELECTRICIDAD* de la localización y renombra a ELECTRICIDAD
-  const wdata = FACTORESDEPASO.wdata
+  const wdata = CTE_FP.wdata
     .filter(f => !OTHERLOCELEC.includes(f.carrier))
     .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
 
   // Incluye metadatos
-  const wmeta = [ ...FACTORESDEPASO.wmeta ];
+  const wmeta = [ ...CTE_FP.wmeta ];
   if (!wmeta.find(f => f.key === 'CTE_FUENTE')) {
     wmeta.push(new_meta('CTE_FUENTE', 'CTE2013'));
   }
