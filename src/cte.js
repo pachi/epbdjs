@@ -66,7 +66,7 @@ const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 // Factores de paso según documento reconocido
 export const CTE_FP_STR = `
 #META CTE_FUENTE: CTE2013
-#META CTE_COMENTARIO: Factores de paso del documento reconocido del RITE de 20/07/2014
+#META CTE_FUENTE_COMENTARIO: Factores de paso del documento reconocido del RITE de 20/07/2014
 ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
 ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
 ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)
@@ -332,12 +332,17 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
   if (!wmeta.find(f => f.key === 'CTE_FUENTE')) {
     wmeta.push(new_meta('CTE_FUENTE', 'CTE2013'));
   }
-  if (!wmeta.find(f => f.key === 'CTE_COMENTARIO')) {
-    wmeta.push(new_meta('CTE_COMENTARIO', 'Valores de la propuesta del documento reconocido del IDAE de 03/02/2014 (pág. 14)'));
+  if (!wmeta.find(f => f.key === 'CTE_FUENTE_COMENTARIO')) {
+    wmeta.push(new_meta('CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014'));
   }
-  wmeta.push(new_meta('CTE_LOC', loc));
+  locmeta = wmeta.find(f => f.key === 'CTE_LOCALIZACION');
+  if (!locmeta) {
+    wmeta.push(new_meta('CTE_LOCALIZACION', loc));
+  } else {
+    locmeta.value === loc;
+  }
 
-  // Completa factores resultantes
+  // Completa factores no definidos
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
