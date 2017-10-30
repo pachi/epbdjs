@@ -6,7 +6,7 @@ ELECTRICIDAD, INSITU, to_grid, A, 1.000, 0.000 # Recursos usados para producir i
 ELECTRICIDAD, INSITU, to_nEPB, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad exportada a usos no EPB
 ELECTRICIDAD, INSITU, to_grid, B, 0.414, 1.954 # Recursos ahorrados a la red (península) por la electricidad producida in situ y exportada a la red
 ELECTRICIDAD, INSITU, to_nEPB, B, 0.414, 1.954 # Recursos ahorrados a la red (península) por la electricidad producida in situ y exportada a usos no EPB
-ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDAD, COGENERACION, to_grid, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)
 ELECTRICIDAD, COGENERACION, to_nEPB, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.414, 1.954 # Recursos ahorrados a la red (península) por la electricidad cogenerada y exportada a la red
@@ -17,7 +17,7 @@ ELECTRICIDADBALEARES, INSITU, to_grid, A, 1.000, 0.000 # Recursos usados para pr
 ELECTRICIDADBALEARES, INSITU, to_nEPB, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad exportada a usos no EPB
 ELECTRICIDADBALEARES, INSITU, to_grid, B, 0.082, 2.968 # Recursos ahorrados a la red (Baleares) por la electricidad producida in situ y exportada a la red
 ELECTRICIDADBALEARES, INSITU, to_nEPB, B, 0.082, 2.968 # Recursos ahorrados a la red (Baleares) por la electricidad producida in situ y exportada a usos no EPB
-ELECTRICIDADBALEARES, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADBALEARES, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADBALEARES, COGENERACION, to_grid, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)
 ELECTRICIDADBALEARES, COGENERACION, to_nEPB, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)
 ELECTRICIDADBALEARES, COGENERACION, to_grid, B, 0.082, 2.968 # Recursos ahorrados a la red (Baleares) por la electricidad cogenerada y exportada a la red
@@ -28,7 +28,7 @@ ELECTRICIDADCANARIAS, INSITU, to_grid, A, 1.000, 0.000 # Recursos usados para pr
 ELECTRICIDADCANARIAS, INSITU, to_nEPB, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad exportada a usos no EPB
 ELECTRICIDADCANARIAS, INSITU, to_grid, B, 0.070, 2.924 # Recursos ahorrados a la red (Canarias) por la electricidad producida in situ y exportada a la red
 ELECTRICIDADCANARIAS, INSITU, to_nEPB, B, 0.070, 2.924 # Recursos ahorrados a la red (Canarias) por la electricidad producida in situ y exportada a usos no EPB
-ELECTRICIDADCANARIAS, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADCANARIAS, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADCANARIAS, COGENERACION, to_grid, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)
 ELECTRICIDADCANARIAS, COGENERACION, to_nEPB, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)
 ELECTRICIDADCANARIAS, COGENERACION, to_grid, B, 0.070, 2.924 # Recursos ahorrados a la red (Canarias) por la electricidad cogenerada y exportada a la red
@@ -39,7 +39,7 @@ ELECTRICIDADCEUTAMELILLA, INSITU, to_grid, A, 1.000, 0.000 # Recursos usados par
 ELECTRICIDADCEUTAMELILLA, INSITU, to_nEPB, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad exportada a usos no EPB
 ELECTRICIDADCEUTAMELILLA, INSITU, to_grid, B, 0.072, 2.718 # Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad producida in situ y exportada a la red
 ELECTRICIDADCEUTAMELILLA, INSITU, to_nEPB, B, 0.072, 2.718 # Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad producida in situ y exportada a usos no EPB
-ELECTRICIDADCEUTAMELILLA, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADCEUTAMELILLA, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADCEUTAMELILLA, COGENERACION, to_grid, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a la red (definible por usuario)
 ELECTRICIDADCEUTAMELILLA, COGENERACION, to_nEPB, A, 0.000, 2.500 # Recursos usados para producir la electricidad cogenerada exportada a usos no EPB (definible por usuario)
 ELECTRICIDADCEUTAMELILLA, COGENERACION, to_grid, B, 0.072, 2.718 # Recursos ahorrados a la red (Ceuta y Melilla) por la electricidad cogenerada y exportada a la red

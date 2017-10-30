@@ -69,16 +69,16 @@ export const CTE_FP_STR = `
 #META CTE_FUENTE_COMENTARIO: Factores de paso del documento reconocido del RITE de 20/07/2014
 ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
 ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADBALEARES, RED, input, A, 0.082, 2.968 # Recursos usados para suministrar electricidad (Baleares) desde la red
 ELECTRICIDADBALEARES, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDADBALEARES, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADBALEARES, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADCANARIAS, RED, input, A, 0.070, 2.924 # Recursos usados para suministrar electricidad (Canarias) desde la red
 ELECTRICIDADCANARIAS, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDADCANARIAS, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADCANARIAS, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 ELECTRICIDADCEUTAMELILLA, RED, input, A, 0.072, 2.718 # Recursos usados para suministrar electricidad (Ceuta y Melilla) desde la red
 ELECTRICIDADCEUTAMELILLA, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad
-ELECTRICIDADCEUTAMELILLA, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se constabiliza el vector que alimenta el cogenerador)
+ELECTRICIDADCEUTAMELILLA, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 MEDIOAMBIENTE, RED, input, A, 1.000, 0.000 # Recursos usados para suministrar energía térmica del medioambiente (red de suministro ficticia)
 MEDIOAMBIENTE, INSITU, input, A, 1.000, 0.000 # Recursos usados para generar in situ energía térmica del medioambiente (vector renovable)
 BIOCARBURANTE, RED, input, A, 1.028, 0.085 # Recursos usados para suministrar el vector desde la red (Biocarburante = biomasa densificada (pellets))
