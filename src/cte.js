@@ -335,7 +335,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
   if (!wmeta.find(f => f.key === 'CTE_FUENTE_COMENTARIO')) {
     wmeta.push(new_meta('CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014'));
   }
-  locmeta = wmeta.find(f => f.key === 'CTE_LOCALIZACION');
+  const locmeta = wmeta.find(f => f.key === 'CTE_LOCALIZACION');
   if (!locmeta) {
     wmeta.push(new_meta('CTE_LOCALIZACION', loc));
   } else {
