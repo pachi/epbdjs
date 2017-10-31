@@ -46,7 +46,7 @@ import {
 // Factores de paso constantes a lo largo de los intervalos de cálculo
 // ---------------------------------------------------------------------------------------------------------
 
-export const K_EXP = 0.0;
+export const KEXP_DEFAULT = 0.0;
 
 // Valores por defecto para exportación (paso A) de electricidad cogenerada
 const CTE_COGEN_DEFAULTS = {
