@@ -49,19 +49,19 @@ import {
 export const KEXP_DEFAULT = 0.0;
 
 // Valores por defecto para exportación (paso A) de electricidad cogenerada
-const CTE_COGEN_DEFAULTS = {
+export const CTE_COGEN_DEFAULTS = {
   'to_grid': { ren: 0, nren: 2.5 }, // ELECTRICIDAD, COGENERACION, to_grid, A, ren, nren
   'to_nEPB': { ren: 0, nren: 2.5 }  // ELECTRICIDAD, COGENERACION, to_nEPB, A, ren, nren
 };
 
 // Valores por defecto para redes de distrito
-const CTE_RED_DEFAULTS = {
+export const CTE_RED_DEFAULTS = {
   'RED1': { ren: 0, nren: 1.3 }, // RED1, RED, input, A, ren, nren
   'RED2': { ren: 0, nren: 1.3 }  // RED2, RED, input, A, ren, nren
 }
 
 // Localizaciones válidas para CTE
-const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
+export const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 
 // Factores de paso según documento reconocido
 export const CTE_FP_STR = `
