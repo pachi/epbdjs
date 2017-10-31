@@ -313,6 +313,17 @@ export function parse_wfactors(wfactorsstring: string, options: any={ cogen: CTE
   return fix_wfactors(wfactors, { cogen, red });
 }
 
+
+// Actualiza objeto de metadatos con nuevo valor de la clave o inserta clave y valor si no existe
+function updatemeta(metaobj, key, value) {
+  const match = metaobj.find(c => c.key === key)
+  if(match) {
+    match.value = value;
+  } else {
+    metaobj.push({ key, value });
+  }
+}
+
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
@@ -326,26 +337,21 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
   const wdata = CTE_FP.wdata
     .filter(f => !OTHERLOCELEC.includes(f.carrier))
     .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
-
-  // Incluye metadatos
-  const wmeta = [ ...CTE_FP.wmeta ];
-  if (!wmeta.find(f => f.key === 'CTE_FUENTE')) {
-    wmeta.push(new_meta('CTE_FUENTE', 'CTE2013'));
-  }
-  if (!wmeta.find(f => f.key === 'CTE_FUENTE_COMENTARIO')) {
-    wmeta.push(new_meta('CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014'));
-  }
-  const locmeta = wmeta.find(f => f.key === 'CTE_LOCALIZACION');
-  if (!locmeta) {
-    wmeta.push(new_meta('CTE_LOCALIZACION', loc));
-  } else {
-    locmeta.value === loc;
-  }
-
-  // Completa factores no definidos
+  // Define factores de usuario o usa valor por defecto
   let { cogen, red } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
+
+  // Actualiza metadatos con valores bien conocidos
+  const wmeta = [ ...CTE_FP.wmeta ];
+  updatemeta(wmeta, 'CTE_FUENTE', 'CTE2013');
+  updatemeta(wmeta, 'CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014');
+  updatemeta(wmeta, 'CTE_LOCALIZACION', loc);
+  updatemeta(wmeta, 'CTE_COGEN', `${ cogen.to_grid.ren.toFixed(3) }, ${ cogen.to_grid.nren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_COGENNEPB', `${ cogen.to_nEPB.ren.toFixed(3) }, ${ cogen.to_nEPB.nren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_RED1', `${ red.RED1.ren.toFixed(3) }, ${ red.RED1.nren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_RED2', `${ red.RED2.ren.toFixed(3) }, ${ red.RED2.nren.toFixed(3) }`);
+
   return fix_wfactors({ wmeta, wdata }, { cogen, red });
 }
 
