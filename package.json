@@ -1,6 +1,6 @@
 {
   "name": "epbdjs",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "description": "Library and CLI implementing EN ISO 52000-1 energy performance of buildings calculations",
   "main": "lib/index.js",
   "repository": {
