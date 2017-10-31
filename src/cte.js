@@ -189,9 +189,10 @@ export function parse_components(datastring: string): TComponents {
 // ---------------------- Factores de paso -----------------------------------------------
 
 // Asegura consistencia de factores de paso definidos y deduce algunos de los que falten
-export function fix_wfactors(wfactors: TFactors, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }) {
+// También elimina los destinados a exportación to_nEPB por defecto (pueden dejarse con opción a false)
+export function fix_wfactors(wfactors: TFactors, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS, stripnebp: true }) {
   // Valores por defecto
-  let { cogen, red } = options;
+  let { cogen, red, stripnepb=true } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
   // Vectores existentes
@@ -301,16 +302,22 @@ export function fix_wfactors(wfactors: TFactors, options: any={ cogen: CTE_COGEN
     newdata.push(new_factor(('RED2': any), 'RED', 'input', 'A',
       red.RED2.ren, red.RED2.nren, 'Recursos usados para suministrar energía de la red de distrito 2 (definible por el usuario)'));
   }
+
+  // Elimina destino nEPB si stripnepb es true
+  if(stripnepb) {
+    newdata = newdata.filter(e => e.dest !== 'to_nEPB');
+  }
+
   return { wmeta: wfactors.wmeta, wdata: newdata };
 }
 
 // Lee factores de paso desde cadena y sanea los resultados
-export function parse_wfactors(wfactorsstring: string, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
+export function parse_wfactors(wfactorsstring: string, options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS, stripnepb: true }): TFactors {
   const wfactors = epbd_parse_wfactors(wfactorsstring);
-  let { cogen, red } = options;
+  let { cogen, red, stripnepb=true } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
-  return fix_wfactors(wfactors, { cogen, red });
+  return fix_wfactors(wfactors, { cogen, red, stripnepb });
 }
 
 
@@ -327,7 +334,7 @@ function updatemeta(metaobj, key, value) {
 // Genera factores de paso a partir de localización
 // Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
-export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS }): TFactors {
+export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_COGEN_DEFAULTS, red: CTE_RED_DEFAULTS, stripnepb: true }): TFactors {
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
@@ -338,7 +345,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
     .filter(f => !OTHERLOCELEC.includes(f.carrier))
     .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
   // Define factores de usuario o usa valor por defecto
-  let { cogen, red } = options;
+  let { cogen, red, stripnepb=true } = options;
   cogen = cogen || CTE_COGEN_DEFAULTS;
   red = red || CTE_RED_DEFAULTS;
 
@@ -352,7 +359,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], options: any={ cogen: CTE_
   updatemeta(wmeta, 'CTE_RED1', `${ red.RED1.ren.toFixed(3) }, ${ red.RED1.nren.toFixed(3) }`);
   updatemeta(wmeta, 'CTE_RED2', `${ red.RED2.ren.toFixed(3) }, ${ red.RED2.nren.toFixed(3) }`);
 
-  return fix_wfactors({ wmeta, wdata }, { cogen, red });
+  return fix_wfactors({ wmeta, wdata }, { cogen, red, stripnepb });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
