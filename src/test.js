@@ -163,7 +163,7 @@ function check(casename, computed, result, verbose = false) {
         + `\n  ${ showEP(computed.balance.B, 'B')}`;
     }
   }
-  console.log(outstr);
+  console.error(outstr);
 }
 
 // Compute primary energy (weighted energy) from datalist
@@ -312,7 +312,7 @@ console.log("*** Lectura de cadena de factores de paso");
   if (wmeta.length === nmetaexp && wdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
+    console.error(`[ERROR] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
     console.log(wdata);
   }
 }
@@ -322,7 +322,7 @@ console.log("*** Serialización de factores de paso");
   try {
     serialize_wfactors(CTEFP);
   } catch(e) {
-    console.log("[ERROR] al serializar factores de paso");
+    console.error("[ERROR] al serializar factores de paso");
   } finally {
     console.log("[OK] Serialización correcta de factores de paso");
   }
@@ -338,7 +338,7 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
   if (cmetas.length === nmetaexp && cdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
+    console.error(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
   }
 }
 
@@ -352,7 +352,7 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
   if (cmetas.length === nmetaexp && cdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
+    console.error(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
   }
 }
 
@@ -376,8 +376,8 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
   if (fpgen.wdata.length === 21 && fpstrip.wdata.length === 8) {
     console.log(`[OK] Reducción factores de paso de ${ fpgen.wdata.length } a ${ fpstrip.wdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (antes/después) ${ fpgen.wdata.length } / ${ fpstrip.wdata.length }. Esperados 21 / 8`);
-    console.log(fpstrip.wdata);
+    console.error(`[ERROR] Encontrados (antes/después) ${ fpgen.wdata.length } / ${ fpstrip.wdata.length }. Esperados 21 / 8`);
+    console.error(fpstrip.wdata);
   }
 
   const res = energy_performance(components, fp, KEXP);
@@ -387,17 +387,17 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
   if(res.balance.B.ren === res1.balance.B.ren && res.balance.B.nren === res1.balance.B.nren) {
     console.log("[OK] Coincide balance con factores de paso leídos y generados")
   } else {
-    console.log("[ERROR]");
-    console.log("[ERROR] Balance con factores leídos: ", showEP(res.balance.B, 'B'));
-    console.log("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
+    console.error("[ERROR]");
+    console.error("[ERROR] Balance con factores leídos: ", showEP(res.balance.B, 'B'));
+    console.error("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
   }
 
   if(res1.balance.B.ren === res2.balance.B.ren && res1.balance.B.nren === res2.balance.B.nren) {
     console.log("[OK] Coincide balance con factores de paso generados y simplificados")
   } else {
-    console.log("[ERROR]");
-    console.log("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
-    console.log("[ERROR] Balance con factores simplificados: ", showEP(res2.balance.B, 'B'));
+    console.error("[ERROR]");
+    console.error("[ERROR] Balance con factores generados: ", showEP(res1.balance.B, 'B'));
+    console.error("[ERROR] Balance con factores simplificados: ", showEP(res2.balance.B, 'B'));
   }
   console.log(cte.balance_to_plain(res));
   const balxml = cte.balance_to_XML(res);
