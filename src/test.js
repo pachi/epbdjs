@@ -307,12 +307,13 @@ console.log("*** Lectura de cadena de factores de paso");
 {
   const wmeta = CTEFP.wmeta;
   const wdata = CTEFP.wdata;
-  //console.log(metas[0]);
-  //console.log(fps[0]);
-  if (wmeta.length === 2 && wdata.length === 36) {
+  const nmetaexp = 2;
+  const ndataexp = 30;
+  if (wmeta.length === nmetaexp && wdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
+    console.log(wdata);
   }
 }
 
@@ -331,13 +332,13 @@ console.log("*** Lectura de archivo .csv (formato obsoleto) con metadatos");
 {
   const components = componentsfromfile('examples/cteEPBD-N_R09_unif-ET5-V048R070-C1_peninsula.csv')
   const cmetas = components.cmeta;
-  const cdata = components.cdata
-    .filter(cte.carrier_isvalid);
-
-  if (cmetas.length === 70 && cdata.length === 4) {
+  const cdata = components.cdata.filter(cte.carrier_isvalid);
+  const nmetaexp = 70;
+  const ndataexp = 4;
+  if (cmetas.length === nmetaexp && cdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
   }
 }
 
@@ -345,12 +346,13 @@ console.log("*** Lectura de archivo .csv con definición de servicios");
 {
   const components = componentsfromfile('examples/newServicesFormat.csv');
   const cmetas = components.cmeta;
-  const cdata = components.cdata
-    .filter(cte.carrier_isvalid);
-  if (cmetas.length === 3 && cdata.length === 4) {
+  const cdata = components.cdata.filter(cte.carrier_isvalid);
+  const nmetaexp = 3;
+  const ndataexp = 4;
+  if (cmetas.length === nmetaexp && cdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }`);
   } else {
-    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados 1 / 21`);
+    console.log(`[ERROR] Encontrados (META/CARRIER) ${ cmetas.length } / ${ cdata.length }. Esperados ${ nmetaexp } / ${ ndataexp }`);
   }
 }
 
