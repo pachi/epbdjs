@@ -320,7 +320,7 @@ function updatemeta(metaobj, key, value) {
   if(match) {
     match.value = value;
   } else {
-    metaobj.push({ key, value });
+    metaobj.push(new_meta(key, value));
   }
 }
 
