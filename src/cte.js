@@ -420,42 +420,44 @@ export function balance_to_XML(balanceobj: TBalance) {
   const wdata = wfactors.wdata;
 
   const cmetastring = cmeta.map(m =>
-    `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
+    `      <m><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></m>`).join('\n');
   const cdatastring = cdata.map(c => {
     const { carrier, ctype, csubtype, service, values, comment } = c;
-    const vals = values.map(v => `<v>${ v.toFixed(2) }</v>`).join('');
-    return `    <vector>
-      <carrier>${ carrier }</carrier>
-      <ctype>${ ctype }</ctype>
-      <csubtype>${ csubtype }</csubtype>
-      <service>${ service }</service>
-      <values>${ vals }</values>
-      <comment>${ escapeXML(comment) }</comment>
-    </vector>`;
+    const vals = values.map(v => `${ v.toFixed(2) }`).join(',');
+    return `      <d>
+        <carrier>${ carrier }</carrier><ctype>${ ctype }</ctype><csubtype>${ csubtype }</csubtype><service>${ service }</service>
+        <values>${ vals }</values>
+        <comment>${ escapeXML(comment) }</comment>
+      </d>`;
   }).join('\n');
   const wmetastring = wmeta.map(m =>
-  `    <meta><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></meta>`).join('\n');
+  `      <m><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></m>`).join('\n');
   const wdatastring = wdata.map(f => {
     const { carrier, source, dest, step, ren, nren, comment } = f;
-    return `    <fp>
-      <carrier>${ carrier }</carrier>
-      <source>${ source }</source>
-      <dest>${ dest }</dest>
-      <step>${ step }</step>
-      <ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
-      <comment>${ escapeXML(comment) }</comment>
-    </fp>`;
+    return `      <d>
+        <carrier>${ carrier }</carrier><source>${ source }</source><dest>${ dest }</dest>
+        <step>${ step }</step><ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
+        <comment>${ escapeXML(comment) }</comment>
+      </d>`;
   }).join('\n');
 
   return `<CTEEPBD>
-  <vectores>
+  <componentes>
+    <meta>
 ${ cmetastring }
+    </meta>
+    <data>
 ${ cdatastring }
-  </vectores>
-  <fps>
+    </data>
+  <componentes/>
+  <factores>
+    <meta>
 ${ wmetastring }
+    </meta>
+    <data>
 ${ wdatastring }
-  </fps>
+    </data>
+  </factores>
   <kexp>${ k_exp.toFixed(2) }</kexp>
   <arearef>${ arearef.toFixed(2) }</arearef><!-- área de referencia [m2] -->
   <ep_m2><!-- ep [kWh/m2.an] -->
