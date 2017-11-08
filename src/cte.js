@@ -418,52 +418,50 @@ export function balance_to_XML(balanceobj: TBalance) {
   const cdata = components.cdata;
   const wmeta = wfactors.wmeta;
   const wdata = wfactors.wdata;
-
+  const wmetastring = wmeta.map(m =>
+    `      <Metadato><Clave>${ escapeXML(m.key) }</Clave><Valor>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</Valor></Metadato>`).join('\n');
+    const wdatastring = wdata.map(f => {
+      const { carrier, source, dest, step, ren, nren, comment } = f;
+      return `      <Dato>
+          <Vector>${ carrier }</Vector><Origen>${ source }</Origen><Destino>${ dest }</Destino>
+          <Paso>${ step }</Paso><ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
+          <Comentario>${ escapeXML(comment) }</Comentario>
+        </Dato>`;
+    }).join('\n');
   const cmetastring = cmeta.map(m =>
-    `      <m><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></m>`).join('\n');
+    `      <Metadato><Clave>${ escapeXML(m.key) }</Clave><Valor>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</Valor></Metadato>`).join('\n');
   const cdatastring = cdata.map(c => {
     const { carrier, ctype, csubtype, service, values, comment } = c;
     const vals = values.map(v => `${ v.toFixed(2) }`).join(',');
-    return `      <d>
-        <carrier>${ carrier }</carrier><ctype>${ ctype }</ctype><csubtype>${ csubtype }</csubtype><service>${ service }</service>
-        <values>${ vals }</values>
-        <comment>${ escapeXML(comment) }</comment>
-      </d>`;
-  }).join('\n');
-  const wmetastring = wmeta.map(m =>
-  `      <m><k>${ escapeXML(m.key) }</k><v>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</v></m>`).join('\n');
-  const wdatastring = wdata.map(f => {
-    const { carrier, source, dest, step, ren, nren, comment } = f;
-    return `      <d>
-        <carrier>${ carrier }</carrier><source>${ source }</source><dest>${ dest }</dest>
-        <step>${ step }</step><ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
-        <comment>${ escapeXML(comment) }</comment>
-      </d>`;
+    return `      <Dato>
+        <Vector>${ carrier }</Vector><Tipo>${ ctype }</Tipo><Subtipo>${ csubtype }</Subtipo><Servicio>${ service }</Servicio>
+        <Valores>${ vals }</Valores>
+        <Comentario>${ escapeXML(comment) }</Comentario>
+      </Dato>`;
   }).join('\n');
 
-  return `<CTEEPBD>
-  <componentes>
-    <meta>
-${ cmetastring }
-    </meta>
-    <data>
-${ cdatastring }
-    </data>
-  <componentes/>
-  <factores>
-    <meta>
+  return `<BalanceEPB>
+  <FactoresDePaso>
+    <Metadatos>
 ${ wmetastring }
-    </meta>
-    <data>
+    </Metadatos>
+    <Datos>
 ${ wdatastring }
-    </data>
-  </factores>
+    </Datos>
+  </FactoresDePaso>
+  <Componentes>
+    <Metadatos>
+${ cmetastring }
+    </Metadatos>
+    <Datos>
+${ cdatastring }
+    </Datos>
+  <Componentes/>
   <kexp>${ k_exp.toFixed(2) }</kexp>
-  <arearef>${ arearef.toFixed(2) }</arearef><!-- área de referencia [m2] -->
-  <ep_m2><!-- ep [kWh/m2.an] -->
-    <tot>${ (ren + nren).toFixed(1) }</tot>
+  <AreaRef>${ arearef.toFixed(2) }</AreaRef><!-- área de referencia [m2] -->
+  <Epm2><!-- ep [kWh/m2.a] -->
     <ren>${ ren.toFixed(1) }</ren>
     <nren>${ nren.toFixed(1) }</nren>
-  </ep_m2>
-</CTEEPBD>`;
+  </Epm2>
+</BalanceEPB>`;
 }
