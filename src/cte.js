@@ -423,10 +423,10 @@ export function balance_to_XML(balanceobj: TBalance) {
     const wdatastring = wdata.map(f => {
       const { carrier, source, dest, step, ren, nren, comment } = f;
       return `      <Dato>
-          <Vector>${ carrier }</Vector><Origen>${ source }</Origen><Destino>${ dest }</Destino>
-          <Paso>${ step }</Paso><ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
-          <Comentario>${ escapeXML(comment) }</Comentario>
-        </Dato>`;
+        <Vector>${ carrier }</Vector><Origen>${ source }</Origen><Destino>${ dest }</Destino>
+        <Paso>${ step }</Paso><ren>${ ren.toFixed(3) }</ren><nren>${ nren.toFixed(3) }</nren>
+        <Comentario>${ escapeXML(comment) }</Comentario>
+      </Dato>`;
     }).join('\n');
   const cmetastring = cmeta.map(m =>
     `      <Metadato><Clave>${ escapeXML(m.key) }</Clave><Valor>${ typeof m.value === "string" ? escapeXML(m.value) : m.value }</Valor></Metadato>`).join('\n');
@@ -456,7 +456,7 @@ ${ cmetastring }
     <Datos>
 ${ cdatastring }
     </Datos>
-  <Componentes/>
+  </Componentes>
   <kexp>${ k_exp.toFixed(2) }</kexp>
   <AreaRef>${ arearef.toFixed(2) }</AreaRef><!-- área de referencia [m2] -->
   <Epm2><!-- ep [kWh/m2.a] -->
