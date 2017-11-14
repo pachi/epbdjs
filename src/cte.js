@@ -338,15 +338,20 @@ export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS
     .filter(f => !OTHERLOCELEC.includes(f.carrier))
     .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
 
+  const { ren: cgtogridren, nren: cgtogridnren } = { ...CTE_COGEN_DEFAULTS.to_grid, ...cogen.to_grid };
+  const { ren: cgtonepbren, nren: cgtonepbnren } = { ...CTE_COGEN_DEFAULTS.to_nEPB, ...cogen.to_nEPB };
+  const { ren: red1ren, nren: red1nren } = { ...CTE_RED_DEFAULTS.RED1, ...red.RED1 };
+  const { ren: red2ren, nren: red2nren } = { ...CTE_RED_DEFAULTS.RED2, ...red.RED2 };
+
   // Actualiza metadatos con valores bien conocidos
   const wmeta = [ ...CTE_FP.wmeta ];
   updatemeta(wmeta, 'CTE_FUENTE', 'CTE2013');
   updatemeta(wmeta, 'CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014');
   updatemeta(wmeta, 'CTE_LOCALIZACION', loc);
-  updatemeta(wmeta, 'CTE_COGEN', `${ cogen.to_grid.ren.toFixed(3) }, ${ cogen.to_grid.nren.toFixed(3) }`);
-  updatemeta(wmeta, 'CTE_COGENNEPB', `${ cogen.to_nEPB.ren.toFixed(3) }, ${ cogen.to_nEPB.nren.toFixed(3) }`);
-  updatemeta(wmeta, 'CTE_RED1', `${ red.RED1.ren.toFixed(3) }, ${ red.RED1.nren.toFixed(3) }`);
-  updatemeta(wmeta, 'CTE_RED2', `${ red.RED2.ren.toFixed(3) }, ${ red.RED2.nren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_COGEN', `${ cgtogridren.toFixed(3) }, ${ cgtogridnren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_COGENNEPB', `${ cgtonepbren.toFixed(3) }, ${ cgtonepbnren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_RED1', `${ red1ren.toFixed(3) }, ${ red1nren.toFixed(3) }`);
+  updatemeta(wmeta, 'CTE_RED2', `${ red2ren.toFixed(3) }, ${ red2nren.toFixed(3) }`);
 
   return fix_wfactors({ wmeta, wdata }, { cogen, red, stripnepb });
 }
