@@ -322,7 +322,6 @@ export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
   const basefactors = parse_wfactors(CTE_FP[loc]);
-
   const { ren: cgtogridren, nren: cgtogridnren } = { ...CTE_COGEN_DEFAULTS.to_grid, ...cogen.to_grid };
   const { ren: cgtonepbren, nren: cgtonepbnren } = { ...CTE_COGEN_DEFAULTS.to_nEPB, ...cogen.to_nEPB };
   const { ren: red1ren, nren: red1nren } = { ...CTE_RED_DEFAULTS.RED1, ...red.RED1 };
