@@ -29,8 +29,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
 /* Flow types definitions */
 // Common (carriers + weighting factors)
 export type carrierType =
-  'ELECTRICIDAD' | 'ELECTRICIDADBALEARES' | 'ELECTRICIDADCANARIAS'
-  | 'ELECTRICIDADCEUTAYMELILLA' | 'MEDIOAMBIENTE' | 'BIOCARBURANTE' | 'BIOMASA'
+  'ELECTRICIDAD' | 'MEDIOAMBIENTE' | 'BIOCARBURANTE' | 'BIOMASA'
   | 'BIOMASADENSIFICADA' | 'CARBON' | 'FUELOIL' | 'GASNATURAL' | 'GASOLEO' | 'GLP';
 // Energy Components
 export type ctypeType = 'PRODUCCION' | 'CONSUMO';

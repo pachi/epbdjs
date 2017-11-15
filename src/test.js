@@ -92,7 +92,7 @@ ELECTRICIDAD, COGENERACION, to_nEPB, A, 1.0, 0.0
 ELECTRICIDAD, COGENERACION, to_grid, B, 0.5, 2.0
 ELECTRICIDAD, COGENERACION, to_nEPB, B, 0.5, 2.0`);
 
-const CTEFP = cte.CTE_FP;
+const CTEFP = cte.new_wfactors('PENINSULA');
 
 // data from ejemplo3PVBdC_normativo
 const ENERGYDATALIST = { cmeta: [], cdata: [
@@ -307,8 +307,8 @@ console.log("*** Lectura de cadena de factores de paso");
 {
   const wmeta = CTEFP.wmeta;
   const wdata = CTEFP.wdata;
-  const nmetaexp = 2;
-  const ndataexp = 30;
+  const nmetaexp = 7;
+  const ndataexp = 21;
   if (wmeta.length === nmetaexp && wdata.length === ndataexp) {
     console.log(`[OK] Encontrados (META/FACTOR) ${ wmeta.length } / ${ wdata.length }`);
   } else {

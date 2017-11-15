@@ -67,18 +67,6 @@ export const CTE_LOCS = ['PENINSULA', 'BALEARES', 'CANARIAS', 'CEUTAMELILLA'];
 export const CTE_FP_STR = `
 #META CTE_FUENTE: CTE2013
 #META CTE_FUENTE_COMENTARIO: Factores de paso del documento reconocido del RITE de 20/07/2014
-ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (peninsular) desde la red
-ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se contabiliza el vector que alimenta el cogenerador)
-ELECTRICIDADBALEARES, RED, input, A, 0.082, 2.968 # Recursos usados para suministrar electricidad (Baleares) desde la red
-ELECTRICIDADBALEARES, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDADBALEARES, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
-ELECTRICIDADCANARIAS, RED, input, A, 0.070, 2.924 # Recursos usados para suministrar electricidad (Canarias) desde la red
-ELECTRICIDADCANARIAS, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
-ELECTRICIDADCANARIAS, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
-ELECTRICIDADCEUTAMELILLA, RED, input, A, 0.072, 2.718 # Recursos usados para suministrar electricidad (Ceuta y Melilla) desde la red
-ELECTRICIDADCEUTAMELILLA, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir in situ la electricidad
-ELECTRICIDADCEUTAMELILLA, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la electricidad cogenerada (0 porque se contabiliza el vector que alimenta el cogenerador)
 MEDIOAMBIENTE, RED, input, A, 1.000, 0.000 # Recursos usados para suministrar energía térmica del medioambiente (red de suministro ficticia)
 MEDIOAMBIENTE, INSITU, input, A, 1.000, 0.000 # Recursos usados para generar in situ energía térmica del medioambiente (vector renovable)
 BIOCARBURANTE, RED, input, A, 1.028, 0.085 # Recursos usados para suministrar el vector desde la red (Biocarburante = biomasa densificada (pellets))
@@ -89,28 +77,30 @@ FUELOIL, RED, input, A, 0.003, 1.179 # Recursos usados para suministrar el vecto
 GASNATURAL, RED, input, A, 0.005, 1.190 # Recursos usados para suministrar el vector desde la red
 GASOLEO, RED, input, A, 0.003, 1.179 # Recursos usados para suministrar el vector desde la red
 GLP, RED, input, A, 0.030, 1.201 # Recursos usados para suministrar el vector desde la red
+ELECTRICIDAD, INSITU, input, A, 1.000, 0.000 # Recursos usados para producir electricidad in situ
+ELECTRICIDAD, COGENERACION, input, A, 0.000, 0.000 # Recursos usados para suministrar la energía (0 porque se contabiliza el vector que alimenta el cogenerador)
 `
+export const CTE_FP = {
+  PENINSULA: CTE_FP_STR + 'ELECTRICIDAD, RED, input, A, 0.414, 1.954 # Recursos usados para suministrar electricidad (PENINSULA) desde la red',
+  BALEARES: CTE_FP_STR + 'ELECTRICIDAD, RED, input, A, 0.082, 2.968 # Recursos usados para suministrar electricidad (BALEARES) desde la red',
+  CANARIAS: CTE_FP_STR + 'ELECTRICIDAD, RED, input, A, 0.070, 2.924 # Recursos usados para suministrar electricidad (CANARIAS) desde la red',
+  CEUTAMELILLA: CTE_FP_STR + 'ELECTRICIDAD, RED, input, A, 0.072, 2.718 # Recursos usados para suministrar electricidad (CEUTA Y MELILLA) desde la red'
+}
+
 // ------------------------ Datos para validación y por defecto ------------------------
 
 export const CTE_VALIDDATA = {
   CONSUMO: {
     EPB: ['BIOCARBURANTE', 'BIOMASA', 'BIOMASADENSIFICADA', 'CARBON',
-          // 'COGENERACION',
-          'ELECTRICIDAD', 'ELECTRICIDADBALEARES',
-          'ELECTRICIDADCANARIAS', 'ELECTRICIDADCEUTAMELILLA', 'FUELOIL',
+          'ELECTRICIDAD', 'FUELOIL',
           'GASNATURAL', 'GASOLEO', 'GLP', 'MEDIOAMBIENTE', 'RED1', 'RED2'],
     NEPB: ['BIOCARBURANTE', 'BIOMASA', 'BIOMASADENSIFICADA', 'CARBON',
-           // 'COGENERACION',
-           'ELECTRICIDAD', 'ELECTRICIDADBALEARES',
-           'ELECTRICIDADCANARIAS', 'ELECTRICIDADCEUTAMELILLA', 'FUELOIL',
+           'ELECTRICIDAD', 'FUELOIL',
            'GASNATURAL', 'GASOLEO', 'GLP', 'MEDIOAMBIENTE', 'RED1', 'RED2']
   },
   PRODUCCION: {
-    INSITU: ['ELECTRICIDAD', 'ELECTRICIDADBALEARES',
-             'ELECTRICIDADCANARIAS', 'ELECTRICIDADCEUTAMELILLA',
-             'MEDIOAMBIENTE'],
-    COGENERACION: ['ELECTRICIDAD', 'ELECTRICIDADBALEARES',
-                   'ELECTRICIDADCANARIAS', 'ELECTRICIDADCEUTAMELILLA']
+    INSITU: ['ELECTRICIDAD', 'MEDIOAMBIENTE'],
+    COGENERACION: ['ELECTRICIDAD']
   }
 };
 
@@ -331,12 +321,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS
   if (!CTE_LOCS.includes(loc)) {
     throw new CteValidityException(`Localización "${ loc }" desconocida al generar factores de paso`);
   }
-  // Vectores ELECTRICIDAD* de otras localizaciones
-  const OTHERLOCELEC = CTE_LOCS.filter(l => l !== loc).map(l => `ELECTRICIDAD${ (l === 'PENINSULA') ? '' : l }`);
-  // Selecciona vectores ELECTRICIDAD* de la localización y renombra a ELECTRICIDAD
-  const wdata = CTE_FP.wdata
-    .filter(f => !OTHERLOCELEC.includes(f.carrier))
-    .map(f => f.carrier.startsWith('ELECTRICIDAD') ? { ...f, carrier: 'ELECTRICIDAD' } : f);
+  const basefactors = parse_wfactors(CTE_FP[loc]);
 
   const { ren: cgtogridren, nren: cgtogridnren } = { ...CTE_COGEN_DEFAULTS.to_grid, ...cogen.to_grid };
   const { ren: cgtonepbren, nren: cgtonepbnren } = { ...CTE_COGEN_DEFAULTS.to_nEPB, ...cogen.to_nEPB };
@@ -344,7 +329,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS
   const { ren: red2ren, nren: red2nren } = { ...CTE_RED_DEFAULTS.RED2, ...red.RED2 };
 
   // Actualiza metadatos con valores bien conocidos
-  const wmeta = [ ...CTE_FP.wmeta ];
+  const wmeta = [ ...basefactors.wmeta ];
   updatemeta(wmeta, 'CTE_FUENTE', 'CTE2013');
   updatemeta(wmeta, 'CTE_FUENTE_COMENTARIO', 'Factores de paso del documento reconocido del RITE de 20/07/2014');
   updatemeta(wmeta, 'CTE_LOCALIZACION', loc);
@@ -353,7 +338,7 @@ export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS
   updatemeta(wmeta, 'CTE_RED1', `${ red1ren.toFixed(3) }, ${ red1nren.toFixed(3) }`);
   updatemeta(wmeta, 'CTE_RED2', `${ red2ren.toFixed(3) }, ${ red2nren.toFixed(3) }`);
 
-  return fix_wfactors({ wmeta, wdata }, { cogen, red, stripnepb });
+  return fix_wfactors({ wmeta, wdata: basefactors.wdata }, { cogen, red, stripnepb });
 }
 
 // Elimina factores de paso no usados en los datos de vectores energéticos
@@ -377,9 +362,6 @@ export function strip_wfactors(wfactors: TFactors, components: TComponents): TFa
   .filter(f => f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
   return { wmeta: wfactors.wmeta, wdata };
 }
-
-export const CTE_FP = parse_wfactors(CTE_FP_STR);
-export const FACTORESDEPASO = CTE_FP; // Alias por compatibilidad
 
 // Métodos de salida -------------------------------------------------------------------
 
