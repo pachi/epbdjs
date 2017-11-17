@@ -15,8 +15,8 @@ The following assumptions have been taken:
 
 ## TODO
 
-- allow other values of load matching factor (or functions) (formula 32, B.32)
-- get results by use items (service), maybe using the reverse method E.3 (E.3.6, E.3.7)
+- allow load matching factor values (or functions) that are not 1 (formula 32, B.32)
+- get results by use items (by service), maybe using the reverse method E.3 (E.3.6, E.3.7)
 
 ## Usage
 
@@ -25,5 +25,5 @@ The following assumptions have been taken:
 
 ### CLI
 
-Not implemented
+See the epbdjs-cli package.
 
