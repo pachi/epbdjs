@@ -29,7 +29,7 @@ import type {
   TComponent, TMeta, TComponents, TFactors, TBalance
 } from './types.js';
 
-import { veclistsum, vecvecdif } from './vecops.js';
+import { vecsum, veckmul, veclistsum, vecvecdif } from './vecops.js';
 import {
   new_carrier, new_factor, new_meta,
   LEGACY_SERVICE_TAG_REGEX,
@@ -361,6 +361,65 @@ export function strip_wfactors(wfactors: TFactors, components: TComponents): TFa
   .filter(f => f.dest !== 'to_nEPB' || HASNEPB)
   .filter(f => f.carrier !== 'ELECTRICIDAD' || f.source !== 'INSITU' || HASELECINSITU);
   return { wmeta: wfactors.wmeta, wdata };
+}
+
+// Funcionalidad para generar RER para ACS en perímetro nearby -------------------------
+
+// Selecciona subconjunto de componentes relacionados con el servicio indicado
+export function components_by_service(components: TComponents, service: any): TComponents {
+  // No tiene sentido usar como servicio NDEF
+  if (service === 'NDEF' || !CTE_VALIDSERVICES.includes(service)) {
+    throw new CteValidityException(`No se pueden filtrar los componentes energético para el servicio ${ service }`);
+  }
+  // 1. Toma todos los consumos y producciones imputadas al servicio (p.e. ACS)
+  // Nota: los consumos de MEDIOAMBIENTE de un servicio ya están equilibrados
+  // Nota: por producciones asignadas a ese servicio (en parse_components)
+  const cdata = components.cdata.filter(c => c.service === service);
+
+  // 2. Reparte la producción de electricidad INSITU asignada a NDEF
+  // en la misma proporción del consumo de elec. del servicio en relación al del total de servicios
+  const pr_el_ndef = components.cdata
+    .filter(c => c.carrier === 'ELECTRICIDAD' && c.ctype === 'PRODUCCION' && c.csubtype === 'INSITU');
+
+  if (pr_el_ndef) { // Hay producción de electricidad in situ de NDEF (no asignada a un servicio)
+    const c_el = components.cdata
+      .filter(c => c.carrier === 'ELECTRICIDAD' && c.ctype === 'CONSUMO');
+    const c_el_tot = c_el
+      .reduce((acc, curr) => acc + vecsum(curr.values), 0);
+    const c_el_srv_tot = c_el
+      .filter(c => c.service === service)
+      .reduce((acc, curr) => acc + vecsum(curr.values), 0);
+    const F_pr_srv = c_el_tot > 0 ? c_el_srv_tot / c_el_tot : 0;
+    pr_el_ndef.map(c => cdata.push(new_carrier(c.carrier, c.ctype, c.csubtype, service,
+      veckmul(c.values, F_pr_srv),
+      c.comment + " Producción insitu proporcionalmente reasignada al servicio."
+    )));
+  }
+
+  const cmeta = [ ...components.cmeta ];
+  updatemeta(cmeta, 'CTE_PERIMETRO', 'NEARBY');
+  updatemeta(cmeta, 'CTE_SERVICIO', service);
+
+  return { cmeta, cdata };
+}
+
+// Vectores considerados dentro del perímetro NEARBY (a excepción de la ELECTRICIDAD in situ)
+export const CTE_NRBY = ['BIOMASA', 'BIOMASADENSIFICADA', 'RED1', 'RED2', 'MEDIOAMBIENTE'] // Ver B.23. Solo biomasa sólida
+
+// Convierte factores de paso con perímetro "distant" a factores de paso "nearby"
+export function wfactors_to_nearby(wfactors: TFactors): TFactors {
+  // Los elementos que tiene origen en la RED (!= INSITU, != COGENERACION)
+  // y no están en la lista CTE_NRBY cambian sus factores de paso
+  // de forma que ren' = 0 y nren' = ren + nren.
+  // ATENCIÓN: ¡¡La producción eléctrica de la cogeneración entra con (factores ren:0, nren:0)!!
+  const wdata = wfactors.wdata.map( f => {
+    if(f.source === 'INSITU' || f.source === 'COGENERACION' || CTE_NRBY.includes(f.carrier)) {
+      return f;
+    }
+    return new_factor(f.carrier, f.source, f.dest, f.step, 0.0, f.ren + f.nren, 'Perímetro nearby: ' + f.comment);
+  });
+  const wmeta = updatemeta([...wfactors.wmeta], 'CTE_PERIMETRO', 'NEARBY');
+  return { wmeta, wdata };
 }
 
 // Métodos de salida -------------------------------------------------------------------

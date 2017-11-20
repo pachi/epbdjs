@@ -405,3 +405,25 @@ console.log("*** Lectura, generación y simplificación de factores de paso");
   const baljson = cte.balance_to_JSON(res);
   console.log("[OK] Salida de Balance en JSON");
 }
+
+console.log("*** Cálculo con factores nearby de RER para ACS");
+{
+  const KEXP = 0.0;
+  const components = componentsfromfile('examples/cte_test_carriers.csv');
+  const compACS = cte.components_by_service(components, 'ACS');
+  //console.log("Componentes de ACS: ", compsACS);
+
+  // Read weighting factors
+  const fp = cte.new_wfactors('PENINSULA');
+  const fpnrb = cte.wfactors_to_nearby(fp);
+  //console.log("Factores (nearby):", fpnrb);
+
+  const res = energy_performance(components, fp, KEXP);
+  console.error("Balance (distant): ", showEP(res.balance.B, 'B'));
+  const res1 = energy_performance(components, fpnrb, KEXP);
+  console.error("Balance (nearby): ", showEP(res1.balance.B, 'B'));
+  const res2 = energy_performance(compACS, fp, KEXP);
+  console.error("Balance para ACS (distant): ", showEP(res2.balance.B, 'B'));
+  const res3 = energy_performance(compACS, fpnrb, KEXP);
+  console.error("Balance para ACS (nearby): ", showEP(res3.balance.B, 'B'));
+}
