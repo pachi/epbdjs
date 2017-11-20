@@ -26,7 +26,7 @@ Author(s): Rafael Villar Burke <pachi@ietcc.csic.es>,
            Daniel Jiménez González <dani@ietcc.csic.es>
 */
 import type {
-  TComponent, TComponents, TFactors, TBalance
+  TComponent, TMeta, TComponents, TFactors, TBalance
 } from './types.js';
 
 import { veclistsum, vecvecdif } from './vecops.js';
@@ -305,13 +305,14 @@ export function parse_wfactors(wfactorsstring: string, { cogen=CTE_COGEN_DEFAULT
 
 
 // Actualiza objeto de metadatos con nuevo valor de la clave o inserta clave y valor si no existe
-function updatemeta(metaobj, key, value) {
+function updatemeta(metaobj: TMeta[], key: string, value: any): TMeta[] {
   const match = metaobj.find(c => c.key === key)
   if(match) {
     match.value = value;
   } else {
     metaobj.push(new_meta(key, value));
   }
+  return metaobj;
 }
 
 // Genera factores de paso a partir de localización
