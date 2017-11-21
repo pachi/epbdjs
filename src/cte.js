@@ -106,6 +106,7 @@ export const CTE_VALIDDATA = {
 
 export const CTE_VALIDSERVICES = [ 'ACS', 'CAL', 'REF', 'VEN', 'ILU', 'HU', 'DHU', 'NDEF' ];
 export const LEGACYSERVICESMAP = { 'WATERSYSTEMS': 'ACS', 'HEATING': 'CAL', 'COOLING': 'REF', 'FANS': 'VEN' };
+export const LEGACYMETAMAP = { 'Localizacion' : 'CTE_LOCALIZACION', 'Area_ref': 'CTE_AREAREF', 'kexp': 'CTE_KEXP' };
 
 // -------------------------------------------------------------------------------------
 // Utilidades de validación y generación
@@ -136,12 +137,18 @@ export function carrier_isvalid(carrier_obj: any): bool {
 
 // Asegura vectores válidos y balance de consumos de vectores de producción in situ
 //
+// Actualiza componentes legacy tanto en metadatos como en datos
 // Comprueba que los vectores energéticos declarados son reconocidos
 // Completa el balance de las producciones in situ cuando el consumo de esos vectores supera la producción
 export function fix_components(components: any): TComponents {
   // Reescribe servicios legacy
   const fixeddata: TComponent[] = components.cdata.map(c =>
     c.service.match(LEGACY_SERVICE_TAG_REGEX) ? ({ ...c, service: LEGACYSERVICESMAP[c.service] }) : c
+  );
+  // Reescribe metadata legacy
+  const legacymetakeys = Object.keys(LEGACYMETAMAP);
+  const fixedmeta: TMeta[] = components.cmeta.map(m =>
+    legacymetakeys.includes(m.key) ? ({ ...m, key: LEGACYMETAMAP[m.key] }) : m
   );
 
   // Vectores con valores coherentes
@@ -167,7 +174,7 @@ export function fix_components(components: any): TComponents {
       'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada');
   }).filter(v => v !== null);
 
-  return { cmeta: components.cmeta, cdata: [...fixeddata, ...balancecarriers] };
+  return { cmeta: fixedmeta, cdata: [...fixeddata, ...balancecarriers] };
 }
 
 // Devuelve objetos CARRIER y META a partir de cadena, intentando asegurar los tipos
