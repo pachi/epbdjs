@@ -312,7 +312,7 @@ export function parse_wfactors(wfactorsstring: string, { cogen=CTE_COGEN_DEFAULT
 
 
 // Actualiza objeto de metadatos con nuevo valor de la clave o inserta clave y valor si no existe
-function updatemeta(metaobj: TMeta[], key: string, value: any): TMeta[] {
+export function updatemeta(metaobj: TMeta[], key: string, value: any): TMeta[] {
   const match = metaobj.find(c => c.key === key)
   if(match) {
     match.value = value;
