@@ -171,7 +171,7 @@ export function fix_components(components: any): TComponents {
       unbalanced_values = vecvecdif(unbalanced_values, totproduced).map(v => Math.max(0, v));
     }
     return new_carrier('MEDIOAMBIENTE', 'PRODUCCION', 'INSITU', service, unbalanced_values,
-      'Equilibrado de energía térmica insitu (MEDIOAMBIENTE) consumida y sin producción declarada');
+      'Equilibrado de energía térmica insitu consumida y sin producción declarada');
   }).filter(v => v !== null);
 
   return { cmeta: fixedmeta, cdata: [...fixeddata, ...balancecarriers] };
