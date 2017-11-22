@@ -163,13 +163,14 @@ export function fix_components(components: any): TComponents {
   const balancecarriers: TComponent[] = services.map((service: any): any => {
     const envcarriersforservice = envcarriers.filter(c => c.service === service);
     const consumed = envcarriersforservice.filter(c => c.ctype === 'CONSUMO');
-    if (consumed.length === 0) return null;
+    if (consumed.length === 0) return null; // No hay consumo
     let unbalanced_values = veclistsum(consumed.map(v => v.values));
     const produced = envcarriersforservice.filter(c => c.ctype === 'PRODUCCION');
     if (produced.length !== 0) {
       const totproduced = veclistsum(produced.map(v => v.values));
       unbalanced_values = vecvecdif(unbalanced_values, totproduced).map(v => Math.max(0, v));
     }
+    if (unbalanced_values.reduce((a, b) => a + b, 0) === 0) return null; // Ya está equilibrado
     return new_carrier('MEDIOAMBIENTE', 'PRODUCCION', 'INSITU', service, unbalanced_values,
       'Equilibrado de energía térmica insitu consumida y sin producción declarada');
   }).filter(v => v !== null);
