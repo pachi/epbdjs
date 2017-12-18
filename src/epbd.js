@@ -165,7 +165,7 @@ export function parse_components(datastring: string): TComponents {
 
       let values: number[];
       try {
-        values = stringvalues.map(Number);
+        values = stringvalues.map(Number).map(Math.abs);
       } catch (e) {
         throw new UserException(`Invalid number conversion of values: ${ stringvalues.join(', ') }`);
       }
