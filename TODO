@@ -1,12 +1,3 @@
-- Calcular RER para ACS con nearby
-    - Añadir vectores nearby y onsite
-    - Calcular consumos de cada vector por servicios
-    - Calcular producción de cada vector por servicios
-        - Producción de electricidad asignada proporcionalmente al consumo de cada servicio del vector ELECTRICIDAD
-    - Redefinir factores de paso para nearby (ren'=0 y nren'=ren+nren para distant)
-    - Cálculo del RER con componentes de consumo de ACS, producciones asociadas y factores de paso para perímetro nearby
-
-- Cambiar EP_total, EP_nren y EP_ren a C_ep,tot, C_ep,nren y C_ep,ren
+- Cálculo por servicios / subsistemas
 - Posibilidad de cálculo con factores de paso de emisiones (CO2)
-- Ayuda con ejemplos
-- Aprovechar información por subsistemas / servicios
+
