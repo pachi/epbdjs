@@ -10,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/pachi/epbdjs/issues"
   },
-  "homepage": "https://github.com/pachi/epbdjs#README.m",
+  "homepage": "https://github.com/pachi/epbdjs#README.md",
   "scripts": {
     "build": "rimraf lib/* && babel ./src --out-dir ./lib && npm run copy",
     "copy": "ncp ./src/examples ./lib && ncp README.md lib/README.md && ncp LICENSE lib/LICENSE && ncp TODO lib/TODO",
