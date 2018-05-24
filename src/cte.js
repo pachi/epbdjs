@@ -387,7 +387,7 @@ export function components_by_service(components: TComponents, service: any): TC
   // 2. Reparte la producción de electricidad INSITU asignada a NDEF
   // en la misma proporción del consumo de elec. del servicio en relación al del total de servicios
   const pr_el_ndef = components.cdata
-    .filter(c => c.carrier === 'ELECTRICIDAD' && c.ctype === 'PRODUCCION' && c.csubtype === 'INSITU');
+    .filter(c => c.carrier === 'ELECTRICIDAD' && c.ctype === 'PRODUCCION' && c.csubtype === 'INSITU' && c.service == 'NDEF');
 
   if (pr_el_ndef) { // Hay producción de electricidad in situ de NDEF (no asignada a un servicio)
     const c_el = components.cdata
