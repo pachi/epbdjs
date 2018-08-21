@@ -324,7 +324,7 @@ export function updatemeta(metaobj: TMeta[], key: string, value: any): TMeta[] {
 }
 
 // Genera factores de paso a partir de localización
-// Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAYMELILLA),
+// Usa localización (PENINSULA, CANARIAS, BALEARES, CEUTAMELILLA),
 // factores de paso de cogeneración, y factores de paso para RED1 y RED2
 export function new_wfactors(loc: string=CTE_LOCS[0], { cogen=CTE_COGEN_DEFAULTS, red=CTE_RED_DEFAULTS, stripnepb=true }: any={}): TFactors {
   if (!CTE_LOCS.includes(loc)) {
